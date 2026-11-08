@@ -68,16 +68,27 @@ smooth curved geodesic polylines (`--export-path` on the real
 Delaunay closed loops), not straight-line chords. `docs/anny-soma-x.usda`
 is ANNY's mesh hand-authored directly into real USD (no OBJ, no
 tri-to-quad conversion — ANNY's own topology is already pure triangles).
-A real `godot-sandbox`/`usd.elf` round-trip verification of that USD file
-is BLOCKED on an ABI/extension_api.json mismatch crash in this
-workspace's custom-built Godot editor when loading the freshly-built
-sandbox addon — diagnosed (stack-buffer-overflow, crash report
-confirms it in the addon's init path) but not yet fixed; the USDA
-content itself is independently correct (written straight from ANNY's
-own float64 arrays). All 4 angle/derived fields (`shoulder_incl`,
-`hip_inclination`, `arm_pose_angle`, `crotch_hip_diff`) are now real
-values computed from the bone skeleton's own rotation matrices, not
-approximate markers.
+All 4 angle/derived fields (`shoulder_incl`, `hip_inclination`,
+`arm_pose_angle`, `crotch_hip_diff`) are now real values computed from
+the bone skeleton's own rotation matrices, not approximate markers.
+
+**The `godot-sandbox`/`usd.elf` round-trip is now verified, real, and
+green** (`adapters/usd_roundtrip_probe.gd`): the ABI/`extension_api.json`
+mismatch that crashed the freshly-built sandbox addon (stack-buffer-
+overflow, confirmed via macOS crash report) was fixed by dumping
+`extension_api.json` from THIS workspace's own custom Godot build
+(`godot --headless --dump-extension-api`) instead of using the addon's
+vendored one, and rebuilding `godot-cpp` with `-DGODOTCPP_PRECISION=double`
+to match it. A second real failure then surfaced and was fixed the same
+way (not papered over): OpenUSD's static init needs far more than
+libriscv's 32 MB / 4000-allocation defaults (`"Too many arena chunks"`),
+raised via `Sandbox.set_memory_max(256)` / `set_allocations_max(200000)`.
+With both fixes, the real `usd.elf` guest, loaded in the real Godot
+editor, opened the real hand-authored USDA and reported back
+`usd_mesh_points`/`usd_mesh_indices` matching ANNY's own 18056 points /
+36108 triangles exactly (point diff 5.4e-7, the float32 USD storage
+cast; triangle indices byte-exact) — `adapters/usd_roundtrip_mesh_sample.json`
+is a summary of the verified round-trip output.
 
 ## Why open path and closed loop are NOT the same operation
 
