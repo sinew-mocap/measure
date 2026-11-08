@@ -1,0 +1,23 @@
+# sibling-repos.txt — clone these side by side in ~/ before building
+# adapters that call out to the real tools (see adapters/README.md).
+#
+# This repo's `core/geodesic` and `core/measure-schema` Lean4 packages have
+# NO dependency on any of these (see each package's lakefile.lean) -- they
+# are a from-scratch pure-Lean spec/port, not a binding. These siblings are
+# what an ADAPTER (datasource, in hexagon-ports-adapters terms) would shell
+# out to for the parts not yet ported: the real flip-geodesics C++ oracle,
+# and the mesh/body-shape source this schema targets.
+
+V-Sekai-fire/TOOL_geodesiac_path       # the "rope": flip-geodesics C++ CLI
+                                        # (--measure-path/--measure-loop),
+                                        # the oracle core/geodesic's Lean
+                                        # port should be checked against.
+V-Sekai-fire/NvidiaWarp-GarmentCode     # XPBD cloth sim fork; the body-
+                                        # measurement schema's origin
+                                        # (pygarment's body_params.py).
+sinew-mocap/solve                       # ANNY FK+LBS body solve; the body
+                                        # mesh this schema measures.
+V-Sekai-fire/datasource-anny-render-corpus  # PR #2: real ANNY-SOMA-X
+                                        # measurements for 7/26 fields
+                                        # (see core/measure-schema's
+                                        # AnnySomaX.lean fixture).

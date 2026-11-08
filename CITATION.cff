@@ -1,0 +1,8 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "sinew-mocap/measure"
+authors:
+  - family-names: Lee
+    given-names: "K. S. Ernest (iFire)"
+license: MIT
+repository-code: "https://github.com/sinew-mocap/measure"

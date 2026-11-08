@@ -1,0 +1,28 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lean:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        package: [core/geodesic/lean, core/measure-schema/lean]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: leanprover/lean-action@v1
+        with:
+          lake-package-directory: ${{ matrix.package }}
+      - name: build
+        working-directory: ${{ matrix.package }}
+        run: lake build
+      - name: run geodesic tests
+        if: matrix.package == 'core/geodesic/lean'
+        working-directory: ${{ matrix.package }}
+        run: lake exe geodesic_test
+      - name: run measure-schema report
+        if: matrix.package == 'core/measure-schema/lean'
+        working-directory: ${{ matrix.package }}
+        run: lake exe measure_schema_report
