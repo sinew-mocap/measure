@@ -276,7 +276,7 @@ func _place_column(label_layer: CanvasLayer, items: Array, margin_x: float,
 	# before this call), which is the paper's Lemma 5/Theorem 9
 	# condition for a non-crossing one-side labeling.
 	const RAIL_BASE := 14.0
-	const RAIL_SPACING := 7.0
+	const RAIL_SPACING := 14.0
 	# Rails sit BETWEEN the margin and the anchors (toward image
 	# center), never past the margin off-canvas: left column's rails
 	# move right (+x) from margin_x toward center; right column's

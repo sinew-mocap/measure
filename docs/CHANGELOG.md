@@ -3,6 +3,33 @@
 This file is the chronological record of what was tried, whether it held
 up, and what was kept — not a feature list (that's the README/docs/STATUS.md).
 
+## 2026-11-08 — Verified the boundary-labeling fix with a pure-Godot contact sheet
+
+iFire: "they seem to be still overlapping use contact sheet variations
+to deternine results". Rechecked: a manual coordinate-level trace of
+the real anchor/rail/label positions found NO literal overlap in the
+7px-spacing build, so the earlier complaint was most likely the small
+rail spacing reading as touching lines at typical viewing/compression
+scale, not an actual geometric crossing — but "most likely" is a guess,
+not a determined result, so it needed settling empirically.
+
+Rendered 4 real variants (rail spacing 7/14/20/28px, same real anchor
+data) and tiled them into one contact-sheet PNG. iFire: "no. pure
+godot" — the first attempt at the tiling step used Python+PIL
+(consistent with this repo's existing Python conventions elsewhere,
+but not what was asked); redone with a small headless `SceneTree`
+script (`contact_sheet.gd` in the Godot project, not committed here --
+it is a throwaway verification tool, not part of the shipped pipeline)
+using `Image.load_from_file()` + `Image.blit_rect()` to crop and tile
+the 4 renders — no Python anywhere in the verification step.
+
+Visual inspection of the tiled sheet confirmed all 4 spacings are
+already non-overlapping; picked 14px (clearly legible, comfortably
+larger than the images' line width) as the new shipped default
+(previously 7px). Re-rendered the full diagram at 14px and confirmed
+by eye across the whole image, not just the previously-flagged region:
+zero touching or crossing leader lines anywhere.
+
 ## 2026-11-08 — Leader lines fixed with the real boundary-labeling algorithm
 
 iFire: "lines extending out should never overlap use academic path
