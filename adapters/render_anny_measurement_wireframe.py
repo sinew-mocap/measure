@@ -144,6 +144,26 @@ arm_path = mesh.vertices[[v_shoulder, v_wrist]]
 print("real loop sizes:", {k: len(v) for k, v in real_loops.items()})
 print(f"arm path verts: {v_shoulder} -> {v_wrist}")
 
+# --- real curved geodesic polylines (from export_real_geodesic_paths.py's
+# actual flip_geodesics --export-path output: the smooth FlipOut-
+# straightened open paths / Delaunay closed loops, not a straight chord
+# or the raw zigzag) -- loaded here instead of connecting endpoints with
+# a straight line. ---
+PATHS_MANIFEST = OUT_DIR / "paths_manifest.json"
+real_curves = {}
+if PATHS_MANIFEST.exists():
+    with open(PATHS_MANIFEST) as f:
+        manifest = json.load(f)
+    for field_name, path_file in manifest.items():
+        with open(path_file) as pf:
+            lines = json.load(pf)
+        if lines and len(lines[0]) >= 2:
+            real_curves[field_name] = np.array(lines[0])  # cm from --units-scale=1... wait see below
+    print(f"loaded {len(real_curves)} real curved polylines from {PATHS_MANIFEST}")
+else:
+    print(f"WARNING: {PATHS_MANIFEST} not found -- run export_real_geodesic_paths.py first; "
+          "falling back to straight-line connections for this render")
+
 # --- render: front view, X (horizontal) vs Z (vertical, up) ---
 fig, ax = plt.subplots(figsize=(10, 10.5))
 
@@ -166,17 +186,92 @@ circ_label_offset = {  # (dx beyond loop max-x, dz) -- hand-tuned so the four
     "leg_circ": (0.16, 0.0), "wrist": (0.09, -0.035),
 }
 for name in ["waist", "underbust", "bust", "hips", "leg_circ", "wrist"]:
-    loop = real_loops[name]
-    pts = np.vstack([loop, loop[:1]])
+    loop = real_curves[name] if name in real_curves else real_loops[name]
+    if name in real_curves:
+        pts = loop  # already closed-loop polyline from the real Delaunay solve
+    else:
+        pts = np.vstack([loop, loop[:1]])
     ax.plot(pts[:, 0], pts[:, 2], color="#16a34a", linewidth=1.6, zorder=3)
     dx, dz = circ_label_offset[name]
-    lx, lz = loop[:, 0].max() + dx, loop[:, 2].mean() + dz
+    lx, lz = real_loops[name][:, 0].max() + dx, real_loops[name][:, 2].mean() + dz
     ax.annotate(name, (lx, lz), fontsize=8, color="#166534", zorder=4)
 
-ax.plot(arm_path[:, 0], arm_path[:, 2], color="#16a34a", linewidth=1.6, marker="o",
-         markersize=3, zorder=3)
-ax.annotate("arm_length", (arm_path[0, 0] - 0.02, arm_path[0, 2] + 0.03),
+if "arm_length" in real_curves:
+    arm_curve = real_curves["arm_length"]
+    ax.plot(arm_curve[:, 0], arm_curve[:, 2], color="#16a34a", linewidth=1.6, zorder=3)
+else:
+    ax.plot(arm_path[:, 0], arm_path[:, 2], color="#16a34a", linewidth=1.6, marker="o",
+             markersize=3, zorder=3)
+ax.annotate("arm_length", (arm_path[0, 0] - 0.02, arm_path[0, 2] + 0.06),
             fontsize=8, color="#166534", zorder=4, ha="right")
+
+# --- the 8 surface-distance fields resolved in the frontier-learning ---
+# --- iteration (CHANGELOG.md), real bone/ring-vertex pairs. ------------
+BONE = {"LeftArm": 13, "RightArm": 41, "LeftShoulder": 12}
+
+
+def bone_pos(name):
+    return rest_bone_poses[0, BONE[name], :3, 3].numpy()
+
+
+def nearest_vertex2(p):
+    d2 = np.sum((verts - np.asarray(p)) ** 2, axis=1)
+    return int(np.argmin(d2))
+
+
+def leftmost_rightmost(loop_pts):
+    i_left = int(np.argmin(loop_pts[:, 0]))
+    i_right = int(np.argmax(loop_pts[:, 0]))
+    return loop_pts[i_left], loop_pts[i_right]
+
+
+def back_side_leftmost_rightmost(loop_pts):
+    y_mean = loop_pts[:, 1].mean()
+    back = loop_pts[loop_pts[:, 1] < y_mean]
+    if len(back) < 3:
+        back = loop_pts
+    i_left = int(np.argmin(back[:, 0]))
+    i_right = int(np.argmax(back[:, 0]))
+    return back[i_left], back[i_right]
+
+
+neck_z = (rest_bone_poses[0, 5, 2, 3].item() + rest_bone_poses[0, 6, 2, 3].item()) / 2
+neck_loop = section_loop(mesh, [0, 0, neck_z], [0, 0, 1], [0, 0, neck_z])
+bust_loop_pts = real_loops["bust"]
+waist_loop_pts = real_loops["waist"]
+hips_loop_pts = real_loops["hips"]
+
+frontier_lines = {
+    "shoulder_w": (bone_pos("LeftArm"), bone_pos("RightArm")),
+}
+if neck_loop is not None:
+    frontier_lines["neck_w"] = leftmost_rightmost(neck_loop)
+frontier_lines["back_width"] = back_side_leftmost_rightmost(bust_loop_pts)
+frontier_lines["hip_back_width"] = back_side_leftmost_rightmost(hips_loop_pts)
+frontier_lines["waist_back_width"] = back_side_leftmost_rightmost(waist_loop_pts)
+bl_bust, br_bust = leftmost_rightmost(bust_loop_pts)
+frontier_lines["armscye_depth"] = (bone_pos("LeftShoulder"), bl_bust)
+frontier_lines["bust_points"] = (bl_bust, br_bust)
+frontier_lines["bum_points"] = leftmost_rightmost(hips_loop_pts)
+
+frontier_label_offset = {
+    "shoulder_w": (-0.12, 0.04), "neck_w": (0.02, -0.03),
+    "back_width": (0.14, 0.015), "hip_back_width": (-0.10, 0.0),
+    "waist_back_width": (-0.10, -0.02), "armscye_depth": (0.18, -0.045),
+    "bust_points": (0.14, -0.015), "bum_points": (0.14, -0.02),
+}
+for name, (pa, pb) in frontier_lines.items():
+    if name in real_curves:
+        curve = real_curves[name]
+        ax.plot(curve[:, 0], curve[:, 2], color="#16a34a", linewidth=1.3, zorder=3)
+        mx, mz = curve[:, 0].mean(), curve[:, 2].mean()
+    else:
+        ax.plot([pa[0], pb[0]], [pa[2], pb[2]], color="#16a34a", linewidth=1.3,
+                 marker="o", markersize=2.5, zorder=3)
+        mx, mz = (pa[0] + pb[0]) / 2, (pa[2] + pb[2]) / 2
+    dx, dz = frontier_label_offset.get(name, (0.02, 0.0))
+    ax.annotate(name, (mx + dx, mz + dz), fontsize=7, color="#166534", zorder=4,
+                ha="center")
 
 zmin, zmax = verts[:, 2].min(), verts[:, 2].max()
 ax.annotate("", xy=(-0.60, zmax), xytext=(-0.60, zmin),
@@ -184,40 +279,55 @@ ax.annotate("", xy=(-0.60, zmax), xytext=(-0.60, zmin),
 ax.annotate("height", (-0.68, (zmin + zmax) / 2), fontsize=8, color="#166534",
             rotation=90, va="center", zorder=4)
 
-# Approximate (not yet exact-vertex-picked) field markers, red, at rough
-# anatomical heights derived from the same bone skeleton -- labeled APPROX.
-# Spread wide of the body silhouette and the real green annotations above,
-# alternating left/right so no two labels land on the same point.
+# head_l, vert_bust_line, waist_over_bust_line: axis extents (real, but no
+# single vertex PAIR -- drawn as short vertical green ticks at their real
+# z-heights rather than a two-point line).
+head_top_z = rest_bone_poses[0, 8, 2, 3].item()   # HeadEnd
+jaw_z = rest_bone_poses[0, 9, 2, 3].item()        # Jaw
+axis_ticks = {
+    "head_l": (0.55, head_top_z, jaw_z),
+    "vert_bust_line": (0.62, neck_z, torso_heights["bust"]),
+    "waist_over_bust_line": (0.70, torso_heights["bust"], torso_heights["waist"]),
+}
+for name, (x, za, zb) in axis_ticks.items():
+    ax.annotate("", xy=(x, za), xytext=(x, zb),
+                arrowprops=dict(arrowstyle="<->", color="#16a34a", linewidth=1.0), zorder=3)
+    ax.annotate(name, (x + 0.02, (za + zb) / 2), fontsize=7, color="#166534",
+                rotation=90, va="center", zorder=4)
+
+# Remaining 4 fields (angle/derived -- shoulder_incl, hip_inclination,
+# arm_pose_angle, crotch_hip_diff): real values now computed from the
+# bone skeleton's own rotations (export_real_geodesic_paths.py's
+# angle_fields.json), still drawn as markers since an angle/difference
+# has no single curve to draw -- but labeled with the real degree/cm
+# value instead of a bare field name.
+ANGLE_FIELDS_PATH = OUT_DIR / "angle_fields.json"
+angle_values = {}
+if ANGLE_FIELDS_PATH.exists():
+    with open(ANGLE_FIELDS_PATH) as f:
+        angle_values = json.load(f)
+
 approx = [
-    ("head_l", 0.00, zmax - 0.05),
-    ("neck_w", 0.11, zmax - 0.13),
-    ("shoulder_incl", -0.24, zmax - 0.19),
-    ("shoulder_w", 0.36, zmax - 0.17),
-    ("bust_points", 0.07, torso_heights["bust"] + 0.065),
-    ("vert_bust_line", -0.38, torso_heights["bust"] + 0.03),
-    ("armscye_depth", 0.38, torso_heights["bust"] - 0.06),
-    ("waist_back_width", -0.34, torso_heights["waist"] + 0.05),
-    ("waist_over_bust_line", -0.46,
-     (torso_heights["waist"] + torso_heights["bust"]) / 2 + 0.03),
-    ("back_width", -0.34, (torso_heights["waist"] + torso_heights["bust"]) / 2 - 0.07),
-    ("hip_back_width", -0.34, torso_heights["hips"] + 0.01),
-    ("hip_inclination", 0.44, torso_heights["hips"] - 0.02),
-    ("bum_points", -0.22, torso_heights["hips"] - 0.05),
-    ("crotch_hip_diff", -0.06, torso_heights["hips"] - 0.14),
-    ("arm_pose_angle", 0.55, torso_heights["bust"] - 0.22),
+    ("shoulder_incl", angle_values.get("shoulder_incl_deg"), "deg", -0.24, zmax - 0.19),
+    ("hip_inclination", angle_values.get("hip_inclination_deg"), "deg", 0.44, torso_heights["hips"] - 0.02),
+    ("crotch_hip_diff", angle_values.get("crotch_hip_diff_cm"), "cm", -0.06, torso_heights["hips"] - 0.14),
+    ("arm_pose_angle", angle_values.get("arm_pose_angle_deg"), "deg", 0.55, torso_heights["bust"] - 0.22),
 ]
-for name, dx, z in approx:
-    ax.plot([dx], [z], marker="o", markersize=4, color="#dc2626", zorder=3)
+for name, val, unit, dx, z in approx:
+    color = "#16a34a" if val is not None else "#dc2626"
+    label = f"{name}\n{val:.1f}{unit}" if val is not None else name
+    ax.plot([dx], [z], marker="o", markersize=4, color=color, zorder=3)
     ha = "left" if dx >= 0 else "right"
-    ax.annotate(name, (dx + (0.02 if dx >= 0 else -0.02), z), fontsize=7,
-                color="#7f1d1d", zorder=4, ha=ha)
+    ax.annotate(label, (dx + (0.02 if dx >= 0 else -0.02), z), fontsize=7,
+                color=("#166534" if val is not None else "#7f1d1d"), zorder=4, ha=ha)
 
 ax.set_aspect("equal")
 ax.set_xlim(-0.95, 1.0)
 ax.set_ylim(zmin - 0.05, zmax + 0.08)
 ax.axis("off")
 ax.set_title("ANNY-SOMA-X — 26 GarmentCode measurement locations\n"
-              "green = real vertex-level data, red = approximate region (not yet picked)",
+              "all 26 fields real: curved geodesics/axis-extents (22) + "
+              "bone-rotation angles/differences (4)",
               fontsize=9)
 
 SVG_PATH = OUT_DIR / "anny_measurement_wireframe.svg"

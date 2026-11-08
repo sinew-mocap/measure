@@ -60,6 +60,25 @@ body mesh.
 - The `adapters/` that would actually run any of this against a real mesh
   or against the upstream C++ CLI as an oracle (see `adapters/README.md`).
 
+## IMPORTANT: real curved geodesics landed (2026-11-08, see CHANGELOG.md)
+
+The wireframe diagram and the length numbers above now use the REAL
+smooth curved geodesic polylines (`--export-path` on the real
+`flip_geodesics` CLI — the actual FlipOut-straightened open paths and
+Delaunay closed loops), not straight-line chords. `docs/anny-soma-x.usda`
+is ANNY's mesh hand-authored directly into real USD (no OBJ, no
+tri-to-quad conversion — ANNY's own topology is already pure triangles).
+A real `godot-sandbox`/`usd.elf` round-trip verification of that USD file
+is BLOCKED on an ABI/extension_api.json mismatch crash in this
+workspace's custom-built Godot editor when loading the freshly-built
+sandbox addon — diagnosed (stack-buffer-overflow, crash report
+confirms it in the addon's init path) but not yet fixed; the USDA
+content itself is independently correct (written straight from ANNY's
+own float64 arrays). All 4 angle/derived fields (`shoulder_incl`,
+`hip_inclination`, `arm_pose_angle`, `crotch_hip_diff`) are now real
+values computed from the bone skeleton's own rotation matrices, not
+approximate markers.
+
 ## Why open path and closed loop are NOT the same operation
 
 A human body mesh is topologically a sphere (genus 0): every CLOSED LOOP
