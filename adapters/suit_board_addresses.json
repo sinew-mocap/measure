@@ -1,0 +1,262 @@
+{
+  "landmarks": {
+    "arm_length_shoulder": {
+      "board_cell_col": 4,
+      "board_cell_row": 24,
+      "nearest_unwrap_match_dist": 0.0000000071247078157257,
+      "orig_vertex": 6058,
+      "texel": [
+        218.478553801775,
+        1081.11866259575
+      ],
+      "uv2": [
+        0.0829455405473709,
+        0.397178053855896
+      ]
+    },
+    "arm_length_wrist": {
+      "board_cell_col": 20,
+      "board_cell_row": 23,
+      "nearest_unwrap_match_dist": 0.00000000644042052496137,
+      "orig_vertex": 818,
+      "texel": [
+        938.660530507565,
+        1060.58264815807
+      ],
+      "uv2": [
+        0.356363147497177,
+        0.389633595943451
+      ]
+    },
+    "armscye_depth_shoulder": {
+      "board_cell_col": 50,
+      "board_cell_row": 31,
+      "nearest_unwrap_match_dist": 0.0000000106747274234953,
+      "orig_vertex": 2265,
+      "texel": [
+        2267.29562079906,
+        1399.8335505724
+      ],
+      "uv2": [
+        0.860780417919159,
+        0.514266550540924
+      ]
+    },
+    "armscye_depth_underarm": {
+      "board_cell_col": 55,
+      "board_cell_row": 55,
+      "nearest_unwrap_match_dist": 0.000000005363885606436,
+      "orig_vertex": 10655,
+      "texel": [
+        2487.51901817322,
+        2501.61331760883
+      ],
+      "uv2": [
+        0.944388389587402,
+        0.919035017490387
+      ]
+    },
+    "back_width_left": {
+      "board_cell_col": 56,
+      "board_cell_row": 55,
+      "nearest_unwrap_match_dist": 0.00000000414768104717618,
+      "orig_vertex": 16650,
+      "texel": [
+        2542.0440158844,
+        2493.73637902737
+      ],
+      "uv2": [
+        0.965088844299316,
+        0.916141211986542
+      ]
+    },
+    "back_width_right": {
+      "board_cell_col": 3,
+      "board_cell_row": 53,
+      "nearest_unwrap_match_dist": 0.00000000365932887970217,
+      "orig_vertex": 14388,
+      "texel": [
+        163.683881498873,
+        2410.53611385822
+      ],
+      "uv2": [
+        0.0621427036821842,
+        0.885575354099274
+      ]
+    },
+    "bum_points_left": {
+      "board_cell_col": 54,
+      "board_cell_row": 46,
+      "nearest_unwrap_match_dist": 0.00000000617642691065635,
+      "orig_vertex": 16772,
+      "texel": [
+        2462.5950139761,
+        2084.79752767086
+      ],
+      "uv2": [
+        0.934925973415375,
+        0.765906512737274
+      ]
+    },
+    "bum_points_right": {
+      "board_cell_col": 12,
+      "board_cell_row": 51,
+      "nearest_unwrap_match_dist": 0.00000000571040702693902,
+      "orig_vertex": 14510,
+      "texel": [
+        573.409173667431,
+        2337.83205187321
+      ],
+      "uv2": [
+        0.217695206403732,
+        0.858865559101105
+      ]
+    },
+    "bust_points_left": {
+      "board_cell_col": 55,
+      "board_cell_row": 55,
+      "nearest_unwrap_match_dist": 0.000000005363885606436,
+      "orig_vertex": 10655,
+      "texel": [
+        2487.51901817322,
+        2501.61331760883
+      ],
+      "uv2": [
+        0.944388389587402,
+        0.919035017490387
+      ]
+    },
+    "bust_points_right": {
+      "board_cell_col": 3,
+      "board_cell_row": 52,
+      "nearest_unwrap_match_dist": 0.0000000119776918119251,
+      "orig_vertex": 6190,
+      "texel": [
+        156.814759500325,
+        2356.39583015442
+      ],
+      "uv2": [
+        0.0595348365604877,
+        0.86568546295166
+      ]
+    },
+    "hip_back_width_left": {
+      "board_cell_col": 55,
+      "board_cell_row": 46,
+      "nearest_unwrap_match_dist": 0.00000000271507618927487,
+      "orig_vertex": 3752,
+      "texel": [
+        2503.09956264496,
+        2098.17923760414
+      ],
+      "uv2": [
+        0.950303554534912,
+        0.770822644233704
+      ]
+    },
+    "hip_back_width_right": {
+      "board_cell_col": 12,
+      "board_cell_row": 52,
+      "nearest_unwrap_match_dist": 0.00000000668913553398155,
+      "orig_vertex": 1548,
+      "texel": [
+        559.711121320724,
+        2377.9841581583
+      ],
+      "uv2": [
+        0.212494730949402,
+        0.873616516590118
+      ]
+    },
+    "neck_w_left": {
+      "board_cell_col": 48,
+      "board_cell_row": 24,
+      "nearest_unwrap_match_dist": 0.0000000222722059713519,
+      "orig_vertex": 2953,
+      "texel": [
+        2163.50115466118,
+        1102.25368130207
+      ],
+      "uv2": [
+        0.821374773979187,
+        0.404942572116852
+      ]
+    },
+    "neck_w_right": {
+      "board_cell_col": 2,
+      "board_cell_row": 25,
+      "nearest_unwrap_match_dist": 0.0000000293070461013574,
+      "orig_vertex": 749,
+      "texel": [
+        103.073351785541,
+        1158.18554264307
+      ],
+      "uv2": [
+        0.039131872355938,
+        0.425490647554398
+      ]
+    },
+    "shoulder_w_left": {
+      "board_cell_col": 4,
+      "board_cell_row": 24,
+      "nearest_unwrap_match_dist": 0.0000000071247078157257,
+      "orig_vertex": 6058,
+      "texel": [
+        218.478553801775,
+        1081.11866259575
+      ],
+      "uv2": [
+        0.0829455405473709,
+        0.397178053855896
+      ]
+    },
+    "shoulder_w_right": {
+      "board_cell_col": 23,
+      "board_cell_row": 20,
+      "nearest_unwrap_match_dist": 0.0000000058712285756856,
+      "orig_vertex": 10523,
+      "texel": [
+        1046.14548504353,
+        907.695813119411
+      ],
+      "uv2": [
+        0.397169888019562,
+        0.333466500043869
+      ]
+    },
+    "waist_back_width_left": {
+      "board_cell_col": 56,
+      "board_cell_row": 51,
+      "nearest_unwrap_match_dist": 0.00000000435014688509172,
+      "orig_vertex": 10814,
+      "texel": [
+        2540.70340454578,
+        2323.52928364277
+      ],
+      "uv2": [
+        0.964579880237579,
+        0.853611052036285
+      ]
+    },
+    "waist_back_width_right": {
+      "board_cell_col": 7,
+      "board_cell_row": 53,
+      "nearest_unwrap_match_dist": 0.00000000381810926425237,
+      "orig_vertex": 6349,
+      "texel": [
+        333.587558269501,
+        2410.55460965633
+      ],
+      "uv2": [
+        0.126646757125854,
+        0.885582149028778
+      ]
+    }
+  },
+  "lightmap_size_hint": [
+    2634,
+    2722
+  ],
+  "post_unwrap_vertex_count": 24020,
+  "pre_unwrap_vertex_count": 18056
+}

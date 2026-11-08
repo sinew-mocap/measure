@@ -22,7 +22,8 @@ body mesh.
 - `core/measure-schema`: the 26-field schema itself (field names verified
   character-for-character against GarmentCode's own
   `assets/bodies/mean_all.yaml`), each field classified by how it would be
-  measured. 15 of 26 fields are now settled, backed by TWO real fixtures:
+  measured. **All 26 of 26 fields are now settled**, backed by THREE real
+  fixtures:
   - `annySomaXPartial`: 7 fields via plane cross-section
     (`datasource-anny-render-corpus` PR #2).
   - `annySomaXGeodesic`: 5 fields via the ACTUAL
@@ -30,10 +31,18 @@ body mesh.
     ANNY-SOMA-X mesh (`datasource-anny-render-corpus` PR #3) — 4
     circumferences through real `--measure-loop` Delaunay-safe loops, and
     `arm_length` through a real `--measure-path` FlipOut-straightened open
-    path (50 `iterativeShorten` iterations, 191 edge flips), the first
-    previously-"needs landmark data" field settled with a measured value.
-    Both fixtures are regression-checked by this package itself
-    (`lake exe measure_schema_report`), not pasted as inert comments.
+    path (50 `iterativeShorten` iterations, 191 edge flips).
+  - `annySomaXFrontier`: the remaining 11 fields, resolved in a
+    frontier-learning iteration over the real ANNY FK bone skeleton
+    (`datasource-anny-render-corpus` PR #5; see CHANGELOG.md for the
+    rejected-then-retried `shoulder_w` attempt). Every landmark behind
+    this fixture is then re-addressed through the REAL ChArUco suit
+    toolchain — `annySomaXSuitBoardCells`, a Godot `lightmap_unwrap` run
+    (`adapters/suit_board_probe.gd`) — as a (row, col) cell on the actual
+    printed suit board, not a raw mesh vertex id tied to one OBJ export.
+
+  All three fixtures are regression-checked by this package itself
+  (`lake exe measure_schema_report`), not pasted as inert comments.
 
 **Not yet ported (tracked, not faked):**
 - The flip-edge straightening search itself (`FlipOut`/`iterativeShorten`
@@ -44,9 +53,10 @@ body mesh.
   length is reported today.
 - 12 of the 26 schema fields still need their surface-distance endpoints or
   landmark definition read from GarmentCode's own
-  `docs/Body Measurements GarmentCode.pdf` before any vertex indices can be
-  picked (down to 11 after `arm_length` settled — see
-  `core/measure-schema`'s `unsettledFields`).
+  `docs/Body Measurements GarmentCode.pdf` to CONFIRM the geometric picks
+  above against the upstream tailor's-tape definition (all 26 are
+  measured today; this is a verification gap, not a missing measurement —
+  see CHANGELOG.md).
 - The `adapters/` that would actually run any of this against a real mesh
   or against the upstream C++ CLI as an oracle (see `adapters/README.md`).
 

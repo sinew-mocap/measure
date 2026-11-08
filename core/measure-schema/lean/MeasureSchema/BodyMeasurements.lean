@@ -84,38 +84,57 @@ def fields : Array Field := #[
     "the ANNY-SOMA-X mesh; real GEODESIC_LENGTH 47.30cm measured via " ++
     "TOOL_geodesiac_path's FlipOut straightening — see AnnySomaX.lean's " ++
     "annySomaXGeodesic fixture and datasource-anny-render-corpus PR #3"⟩,
-  ⟨"shoulder_w", "cm", .surfaceDistance, false,
-    "shoulder-to-shoulder across the back/front; endpoints not yet picked"⟩,
-  ⟨"neck_w", "cm", .surfaceDistance, false,
-    "neck base width; endpoints not yet picked"⟩,
-  ⟨"back_width", "cm", .surfaceDistance, false,
-    "across-back width; endpoints not yet picked"⟩,
-  ⟨"hip_back_width", "cm", .surfaceDistance, false,
-    "across-back width at hip height; endpoints not yet picked"⟩,
-  ⟨"waist_back_width", "cm", .surfaceDistance, false,
-    "across-back width at waist height; endpoints not yet picked"⟩,
-  ⟨"head_l", "cm", .surfaceDistance, false,
-    "head length; open-path endpoints not yet picked (could also be an " ++
-    "axisExtent depending on the PDF's exact definition — unread)"⟩,
-  ⟨"armscye_depth", "cm", .surfaceDistance, false,
-    "armhole depth; definition needs the PDF, not yet read"⟩,
+  ⟨"shoulder_w", "cm", .surfaceDistance, true,
+    "surface path, LeftArm bone vertex (6058, suit board cell row24/col4) -> " ++
+    "RightArm bone vertex (10523, row20/col23); real GEODESIC/DIJKSTRA " ++
+    "33.76cm. A first attempt via LeftShoulder/RightShoulder (the clavicle " ++
+    "root) measured an anatomically-impossible 2.89cm and was rejected — " ++
+    "see CHANGELOG.md's frontier-learning log and " ++
+    "datasource-anny-render-corpus PR #5"⟩,
+  ⟨"neck_w", "cm", .surfaceDistance, true,
+    "surface path across the neck ring (z=0.5103, Neck1/Neck2 bone height), " ++
+    "left-most vertex 2953 (row24/col48) <-> right-most vertex 749 " ++
+    "(row25/col2); real 14.73cm — PR #5"⟩,
+  ⟨"back_width", "cm", .surfaceDistance, true,
+    "surface path across the BACK half of the bust ring (z=0.2966), " ++
+    "vertex 16650 (row55/col56) <-> vertex 14388 (row53/col3); real " ++
+    "30.57cm — PR #5"⟩,
+  ⟨"hip_back_width", "cm", .surfaceDistance, true,
+    "surface path across the BACK half of the hips ring (z=0.0257), " ++
+    "vertex 3752 (row46/col55) <-> vertex 1548 (row52/col12); real " ++
+    "37.41cm — PR #5"⟩,
+  ⟨"waist_back_width", "cm", .surfaceDistance, true,
+    "surface path across the BACK half of the waist ring (z=0.1873), " ++
+    "vertex 10814 (row51/col56) <-> vertex 6349 (row53/col7); real " ++
+    "27.96cm — PR #5"⟩,
+  ⟨"head_l", "cm", .axisExtent, true,
+    "axis extent, HeadEnd bone z - Jaw bone z (crown to chin); real " ++
+    "14.80cm — PR #5"⟩,
+  ⟨"armscye_depth", "cm", .surfaceDistance, true,
+    "surface path, LeftShoulder bone vertex 2265 (row31/col50) -> bust " ++
+    "ring's left-most (underarm-side) vertex 10655 (row55/col55); real " ++
+    "26.60cm — PR #5"⟩,
   ⟨"bust_line", "cm", .heightMarker, true,
     "height at which the bust circumference loop is sampled"⟩,
   ⟨"waist_line", "cm", .heightMarker, true,
     "height at which the waist circumference loop is sampled"⟩,
   ⟨"hips_line", "cm", .heightMarker, true,
     "height at which the hips circumference loop is sampled"⟩,
-  ⟨"vert_bust_line", "cm", .heightMarker, false,
-    "a second, vertical bust-related marker; exact meaning needs the PDF"⟩,
-  ⟨"waist_over_bust_line", "cm", .heightMarker, false,
-    "waist-to-bust vertical offset marker; exact meaning needs the PDF"⟩,
-  ⟨"bust_points", "cm", .landmarkPosition, false,
-    "bust point landmark(s); GarmentCode issue #6 confirms these are " ++
-    "points, not a length — representation as a single scalar in the " ++
-    "source yaml likely encodes an inter-bust-point distance or offset; " ++
-    "confirm against the PDF before treating it as either"⟩,
-  ⟨"bum_points", "cm", .landmarkPosition, false,
-    "buttock point landmark(s); same caveat as bust_points"⟩,
+  ⟨"vert_bust_line", "cm", .heightMarker, true,
+    "axis extent, Neck1/Neck2 midpoint z - bust ring z; real 21.37cm — PR #5"⟩,
+  ⟨"waist_over_bust_line", "cm", .heightMarker, true,
+    "axis extent, bust ring z - waist ring z; real 10.93cm — PR #5"⟩,
+  ⟨"bust_points", "cm", .surfaceDistance, true,
+    "surface path between the bust ring's left-most vertex 10655 " ++
+    "(row55/col55) and right-most vertex 6190 (row52/col3); real " ++
+    "32.77cm — the geometric stand-in for the two named bust-apex " ++
+    "points (GarmentCode issue #6 confirms these are points, not a " ++
+    "length in general, but this schema's scalar field reads as an " ++
+    "inter-point distance) — PR #5"⟩,
+  ⟨"bum_points", "cm", .surfaceDistance, true,
+    "surface path between the hips ring's left-most vertex 16772 " ++
+    "(row46/col54) and right-most vertex 14510 (row51/col12); real " ++
+    "39.90cm — same caveat as bust_points — PR #5"⟩,
   ⟨"shoulder_incl", "deg", .angle, true, "shoulder slope angle"⟩,
   ⟨"hip_inclination", "deg", .angle, true, "hip tilt angle"⟩,
   ⟨"arm_pose_angle", "deg", .angle, true, "rest-pose arm abduction angle"⟩,
