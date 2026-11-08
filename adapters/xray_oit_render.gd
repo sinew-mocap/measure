@@ -44,7 +44,7 @@ func _init() -> void:
 
 	var env := Environment.new()
 	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color(0.03, 0.03, 0.05)
+	env.background_color = Color(0.93, 0.93, 0.95)  # light background, for text labels
 	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
 	env.ssao_enabled = false
 	env.glow_enabled = false
@@ -96,7 +96,7 @@ func _init() -> void:
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	mat.cull_mode = BaseMaterial3D.CULL_DISABLED
-	mat.albedo_color = Color(0.55, 0.85, 0.95, 0.18)  # pale cyan, low alpha: x-ray look
+	mat.albedo_color = Color(0.15, 0.35, 0.55, 0.22)  # darker steel-blue, low alpha: x-ray look on a light background
 	array_mesh.surface_set_material(0, mat)
 
 	var mi := MeshInstance3D.new()
@@ -115,8 +115,14 @@ func _init() -> void:
 	# overlay the real measurement curves/lines on top of the x-ray body
 	# -- opaque bright lines (not OIT: these are 1D curves, not
 	# surfaces, so there's nothing for OIT to resolve), loaded from the
-	# same real geodesic/Euclidean data the wireframe diagram used.
-	_add_measurement_overlays()
+	# same real geodesic/Euclidean data the wireframe diagram used --
+	# plus real text labels (CanvasLayer/Label, screen-projected via
+	# Camera3D.unproject_position), so field names are readable on the
+	# light background.
+	var label_layer := CanvasLayer.new()
+	root.add_child(label_layer)
+	await process_frame
+	_add_measurement_overlays(cam, label_layer)
 
 	for i in 10:
 		await process_frame
@@ -153,11 +159,11 @@ func _load_json(path: String) -> Variant:
 	return JSON.parse_string(txt)
 
 
-func _add_measurement_overlays() -> void:
+func _add_measurement_overlays(cam: Camera3D, label_layer: CanvasLayer) -> void:
 	const MANIFEST := "/Users/ernest.lee/3-interactor/meshing-pen/6-datasource/anny-render-corpus/build/anny_export/paths_manifest.json"
 	const EUCLID := "/Users/ernest.lee/3-interactor/meshing-pen/6-datasource/anny-render-corpus/build/anny_export/euclidean_lines.json"
-	const BRIGHT := Color(0.2, 1.0, 0.4, 1.0)   # real curved geodesics / loops
-	const DASHED := Color(1.0, 0.85, 0.1, 1.0)  # Euclidean straight-line fields
+	const BRIGHT := Color(0.0, 0.45, 0.1, 1.0)    # dark green: real curved geodesics / loops, on a light bg
+	const AMBER := Color(0.75, 0.42, 0.0, 1.0)    # dark amber: real Euclidean straight-line fields
 
 	var manifest = _load_json(MANIFEST)
 	var overlay_count := 0
@@ -178,6 +184,7 @@ func _add_measurement_overlays() -> void:
 			var closed: bool = field_name in ["waist", "hips", "bust", "underbust", "leg_circ", "wrist"]
 			var mi := _line_mesh(pts, BRIGHT, closed)
 			root.add_child(mi)
+			_add_label(label_layer, cam, pts[pts.size() / 2], field_name, BRIGHT)
 			overlay_count += 1
 
 	var euclid = _load_json(EUCLID)
@@ -189,8 +196,9 @@ func _add_measurement_overlays() -> void:
 			var pts := PackedVector3Array()
 			for p in pair:
 				pts.append(Vector3(p[0], p[1], p[2]))
-			var mi := _line_mesh(pts, DASHED, false)
+			var mi := _line_mesh(pts, AMBER, false)
 			root.add_child(mi)
+			_add_label(label_layer, cam, (pts[0] + pts[1]) / 2.0, field_name, AMBER)
 			overlay_count += 1
 		if euclid.has("neck_w_loop") and euclid["neck_w_loop"] != null:
 			var pts2 := PackedVector3Array()
@@ -198,6 +206,19 @@ func _add_measurement_overlays() -> void:
 				pts2.append(Vector3(p[0], p[1], p[2]))
 			var mi2 := _line_mesh(pts2, BRIGHT, true)
 			root.add_child(mi2)
+			_add_label(label_layer, cam, pts2[0], "neck_w", BRIGHT)
 			overlay_count += 1
 
 	print("added ", overlay_count, " real measurement overlay curves")
+
+
+func _add_label(label_layer: CanvasLayer, cam: Camera3D, world_pos: Vector3, text: String, color: Color) -> void:
+	var screen_pos := cam.unproject_position(world_pos)
+	var lbl := Label.new()
+	lbl.text = text
+	lbl.add_theme_color_override("font_color", color)
+	lbl.add_theme_color_override("font_outline_color", Color(1, 1, 1, 0.9))
+	lbl.add_theme_constant_override("outline_size", 3)
+	lbl.add_theme_font_size_override("font_size", 14)
+	lbl.position = screen_pos
+	label_layer.add_child(lbl)

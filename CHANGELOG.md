@@ -192,7 +192,17 @@ layer. `docs/images/anny-soma-x-xray-oit.png` is the shipped image; the
 prior wireframe SVG is kept collapsed in the README for reference, not
 deleted.
 
-## 2026-11-08 — Measurement algorithm re-derived from the REAL reference implementation
+### Light background, real text labels on the x-ray
+
+iFire: "use a light background so we can put text on it". Changed
+`Environment.background_color` to a light gray (was near-black),
+darkened the body/curve colors for contrast against it (steel-blue
+body, dark green geodesics, dark amber Euclidean lines — bright
+green/yellow washed out on a light background), and added REAL text
+labels: a `CanvasLayer`/`Label` per field, screen-projected via
+`Camera3D.unproject_position()` from each curve's real 3D midpoint —
+not a separate compositing pass, baked into the one rendered PNG the
+engine itself produces.
 
 **iFire:** "https://arxiv.org/html/2405.17609v3/body_measurements.png
 https://arxiv.org/html/2405.17609v3#S3.SS3" then
