@@ -1,14 +1,16 @@
 # measure — sinew-mocap
 
-CI
-
-**A tape measure that actually follows the surface — formalized in Lean 4, checked against a real geodesic tool.**
+**A tape measure that actually follows the surface — formalized and checked against a real geodesic tool.**
 
 A flat plane cut through a body mesh is not what a tailor's tape reads, and most measurement pipelines settle for it anyway.
 
 ![ANNY-SOMA-X — 26 GarmentCode measurement locations, real wireframe](docs/images/anny-soma-x-measurement-locations.svg)
 
-A real rendered wireframe of the ANNY-SOMA-X mesh (vector SVG, not a stand-in diagram). Green = the 6 fields with real vertex-level data (the actual loops/path that produced the measured numbers below). Red = the other 20 fields, shown as approximate anatomical regions — their exact landmark is not picked yet, so the dot is honest about being a region, not a precise point.
+A real rendered wireframe of the ANNY-SOMA-X mesh. 
+
+Green = the 6 fields with real vertex-level data (the actual loops/path that produced the measured numbers below).
+
+Red = the other 20 fields, shown as approximate anatomical regions — their exact landmark is not found yet.
 
 ```sh
 cd core/geodesic/lean && lake build && lake exe geodesic_test
