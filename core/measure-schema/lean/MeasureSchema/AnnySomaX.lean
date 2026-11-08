@@ -69,12 +69,27 @@ the `LeftHand` wrist bone (mesh vertices 6058 and 818), reported as
 `iterativeShorten` iterations, 191 edge flips), not just the unstraightened
 Dijkstra length — making this the first of the 26 fields' previously
 "needs landmark data" subset settled with a real measured value rather
-than left undone. -/
+than left undone.
+
+The waist/underbust/hips/bust VALUES were revised again 2026-11-08
+(`datasource-anny-render-corpus` PR #10, then PR #11): DELAUNAY_LENGTH
+(plain Delaunay retriangulation, no shortening) was superseded by the
+real geodesic length from `TOOL_geodesiac_path`'s
+`--measure-loop-adaptive-shorten` (a mesh-size-INDEPENDENT stopping
+criterion -- target max turning angle, not a fixed iteration/length-
+decrease budget tuned to one mesh; iFire: "it has to work for possible
+anny and custom models so you can't hard code" -- see
+`annySomaXFrontier`'s module doc for PR #11's fix). Found and fixed a
+real inverted-parameter bug in `iterativeShorten`'s wrapper along the
+way (iFire: "please use the tool for geodesic paths pls and fix it",
+then "uh thats not a definition of geodesiac" correcting an earlier
+misdiagnosis) -- see CHANGELOG.md for the full story and every old
+value. -/
 def annySomaXGeodesic : List (String × Float) := [
-  ("waist", 65.4053),
-  ("underbust", 69.3587),
-  ("hips", 94.9053),
-  ("bust", 81.0787),
+  ("waist", 63.057),
+  ("underbust", 62.9899),
+  ("hips", 86.8116),
+  ("bust", 71.3415),
   ("arm_length", 47.2983)
 ]
 
@@ -127,15 +142,33 @@ physically faithful) Euclidean choice. `head_l` stays an axis extent
 (a tailor uses a straight rule for height-style measurements, not a
 draped tape over the scalp) and the 3 angle fields are unaffected
 (`angle_plane_vec`, plane-normal vs. landmark-vector angle, not a
-bone-rotation comparison). Every superseded value from both prior
+bone-rotation comparison).
+
+A FOURTH pass (2026-11-08, PR #10) replaced `neck_w`/`wrist`/`leg_circ`'s
+DELAUNAY_LENGTH with a real shortened geodesic length, after finding
+and fixing a genuinely inverted-semantics bug in `TOOL_geodesiac_path`'s
+`iterativeShorten` CLI wrapper (iFire: "please use the tool for
+geodesic paths pls and fix it"; an earlier misdiagnosis blaming
+inherent 3D surface wobble was corrected: "uh thats not a definition of
+geodesiac" — a piecewise-Dijkstra-stitched loop has real hard corners
+at every anchor vertex by construction, not a geodesic at all).
+
+A FIFTH pass (2026-11-08, PR #11) replaced the fixed iteration/length-
+decrease budget from PR #10 with `--measure-loop-adaptive-shorten`'s
+mesh-size-INDEPENDENT stopping rule (target max turning angle, not an
+empirically-tuned count): iFire: "it has to work for possible anny and
+custom models so you can't hard code" -- the PR #10 budget (200
+iterations, 10% max decrease) was tuned against THIS mesh's specific
+loop sizes and would not transfer correctly to a different ANNY
+phenotype or a custom model. Every superseded value from all five
 passes is kept in CHANGELOG.md's log, not silently erased. -/
 def annySomaXFrontier : List (String × Float) := [
-  ("shoulder_w", 33.76), ("neck_w", 41.12), ("back_width", 30.57),
+  ("shoulder_w", 33.76), ("neck_w", 35.31), ("back_width", 30.57),
   ("hip_back_width", 37.41), ("waist_back_width", 27.96),
   ("head_l", 23.37), ("armscye_depth", 26.60),
   ("vert_bust_line", 21.37),
   ("bust_points", 32.77), ("bum_points", 39.90),
-  ("wrist", 14.82), ("leg_circ", 52.26),
+  ("wrist", 13.69), ("leg_circ", 51.75),
   ("shoulder_incl", 29.06), ("hip_inclination", -13.07), ("arm_pose_angle", 43.90)
 ]
 

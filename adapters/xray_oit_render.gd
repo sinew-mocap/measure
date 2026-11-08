@@ -165,10 +165,21 @@ func _add_measurement_overlays(cam: Camera3D, label_layer: CanvasLayer) -> void:
 	const AMBER := Color(0.75, 0.42, 0.0, 1.0)    # dark amber: real Euclidean straight-line fields
 
 	var manifest = _load_json(MANIFEST)
+	# Every closed loop field (waist, hips, bust, underbust, leg_circ,
+	# wrist, neck_w) now resolves straight to the real, safely bounded-
+	# shortened geodesic loop from TOOL_geodesiac_path's
+	# --measure-loop-bounded-shorten (fixed 2026-11-08: the library's
+	# maxRelativeLengthDecrease parameter had inverted semantics -- see
+	# datasource-anny-render-corpus's export_real_geodesic_paths.py and
+	# CHANGELOG.md for the full story). No plane-cut rendering
+	# workaround needed anymore: this manifest path IS the smooth curve.
+	var loop_fields := ["waist", "hips", "bust", "underbust", "leg_circ", "wrist", "neck_w"]
 	var callouts: Array = []   # [{name, anchor: Vector3, color: Color}]
 	const CORPUS_ROOT := "/Users/ernest.lee/3-interactor/meshing-pen/6-datasource/anny-render-corpus/"
+
 	if manifest != null:
 		for field_name in manifest.keys():
+			var closed: bool = field_name in loop_fields
 			var rel_path: String = str(manifest[field_name])
 			var abs_path := rel_path if rel_path.begins_with("/") else CORPUS_ROOT + rel_path
 			var path_json = _load_json(abs_path)
@@ -180,7 +191,6 @@ func _add_measurement_overlays(cam: Camera3D, label_layer: CanvasLayer) -> void:
 			var pts := PackedVector3Array()
 			for p in line:
 				pts.append(Vector3(p[0], p[1], p[2]))
-			var closed: bool = field_name in ["waist", "hips", "bust", "underbust", "leg_circ", "wrist"]
 			var mi := _line_mesh(pts, BRIGHT, closed)
 			root.add_child(mi)
 			callouts.append({"name": field_name, "anchor": pts[pts.size() / 2], "color": BRIGHT})
@@ -206,6 +216,7 @@ func _add_measurement_overlays(cam: Camera3D, label_layer: CanvasLayer) -> void:
 
 	_layout_callouts(label_layer, cam, callouts)
 	print("added ", callouts.size(), " real measurement overlay curves")
+
 
 
 # Standard diagramming technique: a leader line drawn from the real

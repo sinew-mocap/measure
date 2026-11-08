@@ -3,6 +3,107 @@
 This file is the chronological record of what was tried, whether it held
 up, and what was kept — not a feature list (that's the README/docs/STATUS.md).
 
+## 2026-11-08 — Real geodesic fix (not a rendering workaround), made mesh-independent
+
+iFire: "please use the tool for geodesic paths pls and fix it" — after
+an earlier pass here mistakenly reached for a plane-cut rendering
+workaround instead of fixing the actual measurement tool, corrected by
+iFire: "uh thats not a definition of geodesiac" (a piecewise-Dijkstra-
+stitched loop has real hard corners at every anchor vertex by
+construction, not a zero-curvature geodesic at all).
+
+Traced the real cause into `TOOL_geodesiac_path` itself and found a
+genuine bug: `geometry-central`'s `iterativeShorten(iters,
+maxRelativeLengthDecrease)` stops once `currLength <
+maxRelativeLengthDecrease * initLength` — i.e. it is a threshold on the
+FRACTION OF LENGTH REMAINING, the OPPOSITE of what the parameter name
+suggests (a cap on how much the length is allowed to decrease BY).
+Confirmed empirically: a hips-circumference loop slid 94.9cm → 62.47cm
+(34%) toward the waist's narrower cross-section before naturally
+converging when the misunderstood parameter was passed straight
+through — the SAME collapse-toward-a-narrower-point failure this
+tool's own module comment already warns about for its unbounded
+`--measure-loop-unsafe-shorten` path, just gradual instead of total.
+Added `--measure-loop-bounded-shorten`/`-rel-decrease` (correct-
+semantics flags) plus an explicit CONTROL check that fails loudly past
+a 50% decrease — published as `datasource-anny-render-corpus` PR #10,
+replacing the plane-cut rendering workaround (`render_manifest.json`)
+entirely: the manifest path now IS the real smoothed geodesic curve,
+used for both drawing and the authoritative circumference.
+
+**Then iFire: "it has to work for possible anny and custom models so
+you can't hard code"** — correct: PR #10's fix still used a FIXED
+iteration/length-decrease budget (200 iters, 10% max decrease)
+empirically tuned against this one mesh's loop sizes, with no
+principled basis for a different ANNY phenotype or a wholly custom
+model. Replaced with `--measure-loop-adaptive-shorten=<targetMaxTurnDeg>`
+(`datasource-anny-render-corpus`/`TOOL_geodesiac_path` PR #11): runs
+`iterativeShorten` one step at a time, stopping as soon as the loop's
+largest turning angle (a real geometric quantity, independent of mesh
+scale) drops to or below a target (25deg) — the iteration count and
+length-decrease fraction are SAFETY NETS only (2000 iters, 30% max
+decrease — generous, never the thing that decides "done"), not the
+stopping criterion. Every loop now reports honestly whether it reached
+the target or genuinely converged at a local minimum
+(`ADAPTIVE_SHORTEN_CONVERGED`) instead of silently claiming success.
+
+**Then iFire: "for the ones that are topologically close to edge loops
+check the edge loops to compare for jaggedness"** — checked: the
+ANNY-SOMA-X mesh is fully watertight with ZERO open boundary edges
+anywhere (`trimesh`'s `is_watertight`/boundary-edge count), so there is
+no literal mesh boundary/edge-loop feature to compare against. The
+loops that keep a sharp residual turn even after converging (hips
+87.9deg, neck_w 90.9deg, leg_circ/wrist ~32-34deg) sit near real
+anatomical folds (crotch, jaw) — smooth continuous anatomy, not seams
+or holes, and not something more iterations within the safety nets can
+resolve without risking the demonstrated collapse mode.
+
+Real circumferences, DELAUNAY_LENGTH (never-shortened) → final
+adaptive geodesic (cm): waist 65.41→63.06, bust 81.08→71.34, underbust
+69.36→62.99, hips 94.91→86.81, leg_circ 62.66→51.75, wrist 14.82→13.69,
+neck_w 41.12→35.31.
+
+### Jagged diagram fixed (superseded above; kept for the diagnostic trail)
+
+**Why the diagram was jagged** (iFire: "why is the diagram jagged",
+then the precise mechanism: "for the spherical topological problem you
+treat the loop as partial segments that are too short to go the long
+way"). Inspected `paths/waist.json` directly: the z-coordinate (up
+axis) of a nominally flat ring jumps 0.182 → 0.190 → 0.179 → 0.186
+between ADJACENT points. Root cause, stated precisely: `--measure-loop`
+treats a closed ring as a SEQUENCE OF INDEPENDENT point-to-point
+shortest paths between consecutive snapped vertices. Each of those
+segments is short, and Dijkstra over the mesh's genuinely sphere-
+topology surface has NO constraint to stay near the intended cutting
+plane or "go the long way" around the loop — a segment is free to take
+the globally shortest route between its two endpoints, which near a
+surface fold (underarm, inner thigh, waist crease) can cut to the
+OTHER side of the fold rather than hug the plane, because that route is
+shorter in isolation. Stitching those independently-shortest segments
+back into one "loop" produces the sawtooth: each segment is locally
+correct, but the segments disagree on which side of a fold to run,
+so the stitched polyline zigzags. This is a real topological ambiguity
+in `--measure-loop`'s segment-by-segment construction, not a
+measurement error — the printed `DELAUNAY_LENGTH` (sum of those
+independently-shortest segments) is still a valid upper-bound-tight
+circumference. `export_real_geodesic_paths.py` now also exports
+`render_manifest.json`: for every closed-loop field (waist, bust,
+hips, underbust, leg_circ, wrist, neck_w), the dense, continuous
+mesh-PLANE intersection (a single, globally plane-constrained cut, with
+no independent per-segment shortest-path freedom to exploit) — used
+ONLY for drawing, immune to this ambiguity by construction. The
+authoritative measured circumference is completely unchanged, still
+the real geodesic/Delaunay length used everywhere else in this
+package; only the drawn CURVE for these 7 fields swaps to the smooth,
+equally real plane intersection. Published as a real PR
+(`datasource-anny-render-corpus` PR #8, merged).
+
+**Logbook moved into docs/** (iFire: "move logbook report into docs.
+they're distracting"). This file moved from the repo root into
+`docs/`, alongside `docs/STATUS.md` which already lived there —
+nothing at the repo root but README, LICENSE, CITATION.cff, and real
+source trees.
+
 ## 2026-11-08 — Resolve the 11 remaining fields; re-address via the real ChArUco suit board
 
 **iFire:** "use frontier learning and resolve every red measurement use
