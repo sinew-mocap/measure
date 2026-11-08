@@ -6,6 +6,30 @@ A hexagon cluster (`core/` + `ports/` + `adapters/`) of the Sinew mocap
 stack: body measurement via flip-geodesics (a "tape measure that follows
 the surface"), extracted and formalized in Lean 4.
 
+## The whole repo in one diagram
+
+```mermaid
+flowchart LR
+    MESH["sinew-mocap/solve\nANNY body mesh"]
+    CLI["TOOL_geodesiac_path\nreal C++ flip_geodesics CLI\n(the oracle)"]
+    GEO["core/geodesic (Lean4)\nDijkstra + open-path/closed-loop split"]
+    SCHEMA["core/measure-schema (Lean4)\n26-field GarmentCode schema"]
+    NUMS["15 / 26 fields settled\nreal measured cm values"]
+
+    MESH -- "adapters/measure_anny_geodesic_loops.py" --> CLI
+    CLI -- "DIJKSTRA_LENGTH / GEODESIC_LENGTH / DELAUNAY_LENGTH" --> SCHEMA
+    GEO -. "same algorithm, ported\n(not yet wired to the CLI)" .-> SCHEMA
+    SCHEMA --> NUMS
+```
+
+**Read it left to right:** the real mesh goes into the real C++ tool
+(today, via a Python adapter script), the tool's measured lengths fill in
+the 26-field schema, and the Lean4 `core/geodesic` package is a from-scratch
+formal port of the SAME algorithm the C++ tool uses — correct and tested on
+its own, but not yet called BY the adapter (the dashed arrow). See "What
+this is, and what it is not (yet)" below for exactly what's real vs. still
+future work.
+
 ## What this is, and what it is not (yet)
 
 This repo ports the LENGTH COMPUTATION at the heart of
