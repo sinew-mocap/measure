@@ -256,26 +256,54 @@ func _place_column(label_layer: CanvasLayer, items: Array, margin_x: float,
 	if n == 0:
 		return
 	var step: float = (bottom - top) / max(1, n - 1) if n > 1 else 0.0
+	# Type-opo boundary labeling (Bekos, Kaufmann, Symvonis & Wolff,
+	# "Boundary Labeling: Models and Efficient Algorithms for
+	# Rectangular Maps", Comput. Geom. 36(3), 2007 -- the leader-line
+	# classification this package already names in its own docs): a
+	# 3-segment orthogonal-parallel-orthogonal leader per site, with
+	# EACH leader given its own unique "rail" x for the parallel
+	# (height-adjusting) segment, not one shared boundary line for all
+	# of them. iFire: "lines extending out should never overlap" --
+	# the PRIOR 2-segment construction put every leader's vertical run
+	# on the exact same x=margin_x; whenever two anchors' y-spans
+	# overlapped (common once more than a couple of labels stack up),
+	# their vertical segments literally coincided along a shared
+	# sub-range, not merely crossed. Distinct per-leader rails make
+	# that geometrically impossible: no two leaders can share any
+	# point on their parallel segment if the segments live on
+	# different x-coordinates. Rails are assigned in the SAME sorted
+	# order as the anchors/labels (both already sorted by screen.y
+	# before this call), which is the paper's Lemma 5/Theorem 9
+	# condition for a non-crossing one-side labeling.
+	const RAIL_BASE := 14.0
+	const RAIL_SPACING := 7.0
+	# Rails sit BETWEEN the margin and the anchors (toward image
+	# center), never past the margin off-canvas: left column's rails
+	# move right (+x) from margin_x toward center; right column's
+	# rails move left (-x) from margin_x toward center.
+	var rail_sign := -1.0 if right_aligned else 1.0
 	for i in n:
 		var c = items[i]
 		var anchor: Vector2 = c["screen"]
 		var label_y: float = top + step * i if n > 1 else (top + bottom) / 2.0
 		var label_pos := Vector2(margin_x, label_y)
-		_draw_leader(label_layer, anchor, label_pos, c["color"])
+		var rail_x := margin_x + rail_sign * (RAIL_BASE + float(i) * RAIL_SPACING)
+		_draw_leader(label_layer, anchor, rail_x, label_pos, c["color"])
 		_add_label(label_layer, label_pos, c["name"], c["color"], right_aligned)
 
 
-# Elbow leader line (anchor -> horizontal run -> margin column), the
-# standard callout shape, drawn with Line2D in screen space -- plus a
-# small dot marking the exact measurement point on the body/curve.
-func _draw_leader(label_layer: CanvasLayer, anchor: Vector2, label_pos: Vector2, color: Color) -> void:
-	var elbow := Vector2(label_pos.x, anchor.y)
+# Type-opo leader (Bekos et al. 2007): orthogonal (anchor -> rail at
+# anchor's height) -> parallel (rail: anchor's height -> label's
+# height, on this leader's OWN unique rail_x) -> orthogonal (rail ->
+# label). Plus a small dot marking the exact measurement point.
+func _draw_leader(label_layer: CanvasLayer, anchor: Vector2, rail_x: float, label_pos: Vector2, color: Color) -> void:
 	var line := Line2D.new()
 	line.width = 1.0
 	line.default_color = Color(color.r, color.g, color.b, 0.75)
 	line.add_point(anchor)
-	line.add_point(elbow)
-	line.add_point(Vector2(label_pos.x, label_pos.y))
+	line.add_point(Vector2(rail_x, anchor.y))
+	line.add_point(Vector2(rail_x, label_pos.y))
+	line.add_point(label_pos)
 	label_layer.add_child(line)
 
 	var dot := Line2D.new()  # a tiny filled circle approximation via a short thick point

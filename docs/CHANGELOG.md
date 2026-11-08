@@ -3,6 +3,32 @@
 This file is the chronological record of what was tried, whether it held
 up, and what was kept — not a feature list (that's the README/docs/STATUS.md).
 
+## 2026-11-08 — Leader lines fixed with the real boundary-labeling algorithm
+
+iFire: "lines extending out should never overlap use academic path
+layout papers". The prior leader construction (2-segment "elbow":
+anchor → horizontal run at the anchor's height → one shared vertical
+line at the margin x → label) put EVERY leader's height-adjusting
+segment on the exact same x-coordinate. Sorting anchors/labels by
+screen-y (already done) prevents leaders from topologically crossing,
+but does not prevent two leaders' vertical segments from literally
+overlapping along a shared sub-range whenever their y-spans intersect
+— common once more than a couple of labels stack up on one side.
+
+Replaced with the real published algorithm: Bekos, Kaufmann, Symvonis
+& Wolff, "Boundary Labeling: Models and Efficient Algorithms for
+Rectangular Maps" (Computational Geometry: Theory and Applications
+36(3), 2007; the paper that introduced and named the type-s/po/opo
+leader classification this package's own docs already reference).
+Switched to their type-opo (3-segment orthogonal-parallel-orthogonal)
+construction: each leader gets its OWN unique "rail" x-coordinate for
+its height-adjusting segment (not one shared boundary line), assigned
+in the same sorted order as the anchors (the paper's Lemma 5/
+Theorem 9 condition for a legal, non-crossing one-side labeling).
+Distinct rails make overlap geometrically impossible — no two leaders
+can share a point on their parallel segment if the segments live on
+different x-coordinates.
+
 ## 2026-11-08 — Real geodesic fix (not a rendering workaround), made mesh-independent
 
 iFire: "please use the tool for geodesic paths pls and fix it" — after
