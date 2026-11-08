@@ -1,0 +1,45 @@
+name: build guest elf
+on:
+  push:
+    branches: [main]
+    paths: ["guest/**", "api/**"]
+  pull_request:
+    paths: ["guest/**", "api/**"]
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: install riscv64 cross toolchain
+        run: sudo apt-get update && sudo apt-get install -y gcc-14-riscv64-linux-gnu cmake ninja-build
+      - name: configure
+        working-directory: guest
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake \
+            -DCMAKE_C_COMPILER=riscv64-linux-gnu-gcc-14
+      - name: build
+        working-directory: guest
+        run: cmake --build build -j
+      - name: verify ELF shape
+        working-directory: guest/build
+        run: |
+          file measure.elf | tee /tmp/file_out
+          grep -q "RISC-V" /tmp/file_out
+          # .sandbox_variant: SBXV + u32le 40 (double-precision host)
+          objcopy -O binary --only-section=.sandbox_variant measure.elf /tmp/variant.bin
+          python3 -c "
+          d = open('/tmp/variant.bin','rb').read()
+          assert d[:4] == b'SBXV', d
+          assert int.from_bytes(d[4:8], 'little') == 40, d
+          print('sandbox_variant OK:', d)
+          "
+          for fn in measure_load_mesh measure_open_path_cm measure_closed_loop_cm measure_field_count measure_field_at; do
+            objdump -t measure.elf | grep -q "GLOBAL.*$fn" || { echo "MISSING $fn"; exit 1; }
+          done
+      - name: upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: measure-elf-${{ github.sha }}
+          path: guest/build/measure.elf

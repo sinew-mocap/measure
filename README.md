@@ -20,3 +20,11 @@ cd core/measure-schema/lean && lake build && lake exe measure_schema_report
 Run that to see today's 26 of 26 settled fields, backed by real measured numbers, not placeholders.
 
 The sections below hold what is ported, what is not yet, why open paths and closed loops can never share one straightening step, and the sibling repos to clone: `docs/STATUS.md`.
+
+## Also: a godot-sandbox guest
+
+`guest/measure.elf` is a real RISC-V64 Linux ELF (verified: correct ELF type, `measure_*` symbols `GLOBAL` in `.symtab`, `.sandbox_variant` section reads `SBXV 28000000`) exposing `api/measure_api.h`'s C-ABI to a godot-sandbox host. It is STAGE 1 of 3 (see `guest/main.c`'s module doc): every `measure_*` call is an explicit, documented stub today (schema introspection is real static data; the geodesic queries return a failure sentinel, not a fabricated number) — the real Lean computation is not wired in or ported to run on the guest yet.
+
+```sh
+cd guest && cmake -S . -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -DCMAKE_C_COMPILER=riscv64-linux-gnu-gcc-14 && cmake --build build
+```
