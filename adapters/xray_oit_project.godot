@@ -1,0 +1,12 @@
+config_version=5
+
+[application]
+config/name="anny-xray-oit"
+
+[rendering]
+oit/enabled=true
+oit/slice_count=512
+oit/auto_range=true
+
+[editor]
+export/convert_text_resources_to_binary=false

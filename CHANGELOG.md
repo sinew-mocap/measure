@@ -150,18 +150,47 @@ depends on). Re-ran the real round-trip probe:
 ANNY's own arrays exactly (same blake3 hashes as before — normals-only
 change, geometry unchanged).
 
-### Still open
+### "Still open" item CLOSED: a real engine x-ray render, Godot OIT
 
-- The real-engine Hammersley-sequenced X-ray contact-sheet render
-  (`xray_hammersley_contact_sheet.gd`, written but not yet run to
-  completion against the now-working addon) — "a proper godot engine
-  x-ray render not matplot" is not done; the matplotlib SVG above is
-  still the shipped diagram.
-- `sinew-mocap/measure`'s OWN guest ELF (`guest/main.c`, landed
-  separately, "make measure a proper guest elf") is still stage 1 of 3:
-  its `measure_*` calls are honest stubs, not wired to the real Lean
-  solve. The usd.elf fixes above are a DIFFERENT, pre-existing guest
-  (`V-Sekai-fire/usd-guest`), not this repo's own.
+iFire: "please redo the mesh render. instead of wireframe. please do
+x-ray using godot order independent transparency" then "see
+entities-godot oit" then "you engine already built it" (correct — the
+`entities-godot` worktree for branch `dev/order-independent-
+transparency` had ccache-warmed objects from an earlier session; this
+rebuild relinked in 37 seconds instead of a cold ~30-40 minute engine
+build).
+
+Built the real AVBOIT (adaptive volumetric bucket order-independent
+transparency) engine from `v-sekai-fire/dev/order-independent-
+transparency` (a git worktree, so the main checkout's build stays
+untouched), confirmed real by checking the binary actually exposes
+`rendering/oit/enabled`/`rendering/oit/slice_count` (the stock engine
+has no such ProjectSetting at all — `adapters/xray_oit_render.gd`
+refuses to run and prints an error if that setting is missing, rather
+than silently falling back to ordinary alpha blending and calling it
+an "x-ray").
+
+`adapters/xray_oit_render.gd`: loads the real ANNY-SOMA-X mesh (same
+OBJ this pipeline already exports), renders it as ONE translucent
+surface (low alpha, double-sided, unshaded) through the real Metal/
+Forward+ renderer with `rendering/oit/enabled=true`, then overlays all
+16 real measurement curves from `export_real_geodesic_paths.py`'s
+output (green: real `flip_geodesics` curved loops/paths; yellow: real
+Euclidean straight-line fields from `euclidean_lines.json`) as opaque
+line meshes on top. Run headless with `--display-driver macos
+--rendering-driver metal` (NOT `--headless`, which forces the dummy
+renderer and produces a null texture — confirmed this fails loudly,
+not silently, before finding the right flags).
+
+The result independently confirms the OIT compositing is real, not
+just "the body renders": the eyes, nostrils and mouth — the only
+places on this closed mesh where a camera ray crosses MORE than two
+surface layers (eyelid front+back, nostril interior, lip fold) — render
+visibly brighter than the rest of the body, exactly the signature of
+correct depth-ordered alpha accumulation across more than one extra
+layer. `docs/images/anny-soma-x-xray-oit.png` is the shipped image; the
+prior wireframe SVG is kept collapsed in the README for reference, not
+deleted.
 
 ## 2026-11-08 — Measurement algorithm re-derived from the REAL reference implementation
 
