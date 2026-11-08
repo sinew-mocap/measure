@@ -7,20 +7,63 @@ CI
 A flat plane cut through a body mesh is not what a tailor's tape reads, and most measurement pipelines settle for it anyway.
 
 ```mermaid
-flowchart LR
-    MESH["sinew-mocap/solve\nANNY body mesh"]
-    CLI["TOOL_geodesiac_path\nreal C++ flip_geodesics CLI\n(the oracle)"]
-    GEO["core/geodesic (Lean4)\nDijkstra + open-path/closed-loop split"]
-    SCHEMA["core/measure-schema (Lean4)\n26-field GarmentCode schema"]
-    NUMS["15 / 26 fields settled\nreal measured cm values"]
+flowchart TB
+    subgraph HEAD["Head"]
+        height["height\n(axis extent)"]
+        head_l["head_l\n(surface distance)"]
+    end
+    subgraph NECK["Neck"]
+        neck_w["neck_w\n(surface distance)"]
+    end
+    subgraph SHOULDER["Shoulders"]
+        shoulder_w["shoulder_w\n(surface distance)"]
+        shoulder_incl["shoulder_incl\n(angle)"]
+    end
+    subgraph BUST["Bust / chest"]
+        bust["bust\n(circumference loop)"]
+        bust_line["bust_line\n(height marker)"]
+        bust_points["bust_points\n(landmark)"]
+        vert_bust_line["vert_bust_line\n(height marker)"]
+        underbust["underbust\n(circumference loop)"]
+        armscye_depth["armscye_depth\n(surface distance)"]
+    end
+    subgraph WAIST["Waist"]
+        waist["waist\n(circumference loop)"]
+        waist_line["waist_line\n(height marker)"]
+        waist_back_width["waist_back_width\n(surface distance)"]
+        waist_over_bust_line["waist_over_bust_line\n(height marker)"]
+    end
+    subgraph BACK["Back"]
+        back_width["back_width\n(surface distance)"]
+    end
+    subgraph HIPS["Hips"]
+        hips["hips\n(circumference loop)"]
+        hips_line["hips_line\n(height marker)"]
+        hip_back_width["hip_back_width\n(surface distance)"]
+        hip_inclination["hip_inclination\n(angle)"]
+        bum_points["bum_points\n(landmark)"]
+        crotch_hip_diff["crotch_hip_diff\n(derived difference)"]
+    end
+    subgraph ARM["Arm"]
+        arm_length["arm_length\n(surface distance, real: 47.30cm)"]
+        arm_pose_angle["arm_pose_angle\n(angle)"]
+    end
+    subgraph WRIST["Wrist"]
+        wrist["wrist\n(circumference loop)"]
+    end
+    subgraph LEG["Leg"]
+        leg_circ["leg_circ\n(circumference loop)"]
+    end
 
-    MESH -- "adapters/measure_anny_geodesic_loops.py" --> CLI
-    CLI -- "DIJKSTRA_LENGTH / GEODESIC_LENGTH / DELAUNAY_LENGTH" --> SCHEMA
-    GEO -. "same algorithm, ported\n(not yet wired to the CLI)" .-> SCHEMA
-    SCHEMA --> NUMS
+    HEAD --> NECK --> SHOULDER --> BUST --> WAIST --> BACK --> HIPS --> ARM --> WRIST --> LEG
+
+    classDef settled fill:#bbf7d0,stroke:#16a34a,color:#14532d;
+    classDef unsettled fill:#fecaca,stroke:#dc2626,color:#7f1d1d;
+    class height,waist,bust,underbust,hips,leg_circ,wrist,arm_length,bust_line,waist_line,hips_line,shoulder_incl,hip_inclination,arm_pose_angle,crotch_hip_diff settled
+    class shoulder_w,neck_w,back_width,hip_back_width,waist_back_width,head_l,armscye_depth,vert_bust_line,waist_over_bust_line,bust_points,bum_points unsettled
 ```
 
-Read it left to right: the real mesh goes into the real C++ tool through a Python adapter, the tool's measured lengths fill the 26-field schema, and the Lean 4 `core/geodesic` package is a from-scratch formal port of that same algorithm, tested on its own.
+All 26 GarmentCode body-measurement fields, grouped head to foot by where they sit on the body. Green = settled with a real measured value today; red = still needs its landmark definition read from GarmentCode's own measurement PDF.
 
 ```sh
 cd core/geodesic/lean && lake build && lake exe geodesic_test
