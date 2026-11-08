@@ -21,5 +21,9 @@ def main : IO Unit := do
   if !MeasureSchema.annySomaXFixtureIsConsistent then
     IO.eprintln "FAIL: ANNY-SOMA-X fixture is inconsistent with the schema (see AnnySomaX.lean)"
     IO.Process.exit 1
+  if !MeasureSchema.annySomaXGeodesicFixtureIsConsistent then
+    IO.eprintln "FAIL: ANNY-SOMA-X geodesic fixture is inconsistent with the schema (see AnnySomaX.lean)"
+    IO.Process.exit 1
   IO.println s!"ANNY-SOMA-X fixture: {MeasureSchema.annySomaXPartial.length} real measured values, consistent with schema"
+  IO.println s!"ANNY-SOMA-X geodesic fixture: {MeasureSchema.annySomaXGeodesic.length} real flip_geodesics-measured values, consistent with schema"
   IO.println "all checks passed"

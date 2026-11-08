@@ -27,9 +27,18 @@ body mesh.
 - `core/measure-schema`: the 26-field schema itself (field names verified
   character-for-character against GarmentCode's own
   `assets/bodies/mean_all.yaml`), each field classified by how it would be
-  measured, plus a fixture of 7 real, previously-measured ANNY-SOMA-X values
-  (from `V-Sekai-fire/datasource-anny-render-corpus` PR #2) that this
-  package regression-checks itself against.
+  measured. 15 of 26 fields are now settled, backed by TWO real fixtures:
+  - `annySomaXPartial`: 7 fields via plane cross-section
+    (`datasource-anny-render-corpus` PR #2).
+  - `annySomaXGeodesic`: 5 fields via the ACTUAL
+    `V-Sekai-fire/TOOL_geodesiac_path` headless CLI run against the real
+    ANNY-SOMA-X mesh (`datasource-anny-render-corpus` PR #3) — 4
+    circumferences through real `--measure-loop` Delaunay-safe loops, and
+    `arm_length` through a real `--measure-path` FlipOut-straightened open
+    path (50 `iterativeShorten` iterations, 191 edge flips), the first
+    previously-"needs landmark data" field settled with a measured value.
+    Both fixtures are regression-checked by this package itself
+    (`lake exe measure_schema_report`), not pasted as inert comments.
 
 **Not yet ported (tracked, not faked):**
 - The flip-edge straightening search itself (`FlipOut`/`iterativeShorten`
@@ -41,7 +50,8 @@ body mesh.
 - 12 of the 26 schema fields still need their surface-distance endpoints or
   landmark definition read from GarmentCode's own
   `docs/Body Measurements GarmentCode.pdf` before any vertex indices can be
-  picked — see `core/measure-schema`'s `unsettledFields`.
+  picked (down to 11 after `arm_length` settled — see
+  `core/measure-schema`'s `unsettledFields`).
 - The `adapters/` that would actually run any of this against a real mesh
   or against the upstream C++ CLI as an oracle (see `adapters/README.md`).
 

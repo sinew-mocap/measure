@@ -79,8 +79,11 @@ def fields : Array Field := #[
     "closed loop around the upper leg (see the `_apart` pose note in " ++
     "garmentcodedata-xpbd-pipeline for why this needs the legs abducted)"⟩,
   ⟨"wrist", "cm", .circumference, true, "closed loop around the wrist"⟩,
-  ⟨"arm_length", "cm", .surfaceDistance, false,
-    "shoulder landmark to wrist landmark; open-path endpoints not yet picked"⟩,
+  ⟨"arm_length", "cm", .surfaceDistance, true,
+    "shoulder (LeftArm bone) to wrist (LeftHand bone), vertices 6058/818 on " ++
+    "the ANNY-SOMA-X mesh; real GEODESIC_LENGTH 47.30cm measured via " ++
+    "TOOL_geodesiac_path's FlipOut straightening — see AnnySomaX.lean's " ++
+    "annySomaXGeodesic fixture and datasource-anny-render-corpus PR #3"⟩,
   ⟨"shoulder_w", "cm", .surfaceDistance, false,
     "shoulder-to-shoulder across the back/front; endpoints not yet picked"⟩,
   ⟨"neck_w", "cm", .surfaceDistance, false,
