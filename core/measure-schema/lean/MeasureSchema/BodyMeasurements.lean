@@ -94,31 +94,35 @@ def fields : Array Field := #[
     "plane shifted DOWN until both legs separate into two loops; value is " ++
     "the MINIMUM of the two legs' perimeters at that one height (not a " ++
     "scan along the limb for a max) — real 52.26cm (plane z=-0.0861)"⟩,
-  ⟨"wrist", "cm", .edgeLoopLength, true,
-    "CORRECTED per GarmentCodeData App. 0.B: 'Euclidean edge loop length', " ++
-    "the same operation as neck_w, not a plane-cut convex hull — real " ++
-    "13.54cm"⟩,
+  ⟨"wrist", "cm", .circumference, true,
+    "REVERTED to geodesic 2026-11-08 (iFire: 'use geodesic for the " ++
+    "ones that seem like tape measurable' — a tape wraps AROUND the " ++
+    "wrist, so this is the real Delaunay-tightened closed loop " ++
+    "(flip_geodesics --measure-loop), same treatment as waist/bust/hips, " ++
+    "not the straight edge-loop-length approximation from the published " ++
+    "reference. Real DELAUNAY_LENGTH 14.82cm — PR #7"⟩,
   ⟨"arm_length", "cm", .surfaceDistance, true,
     "shoulder (LeftArm bone) to wrist (LeftHand bone), vertices 6058/818 on " ++
     "the ANNY-SOMA-X mesh; real GEODESIC_LENGTH 47.30cm measured via " ++
     "TOOL_geodesiac_path's FlipOut straightening — see AnnySomaX.lean's " ++
     "annySomaXGeodesic fixture and datasource-anny-render-corpus PR #3"⟩,
-  ⟨"shoulder_w", "cm", .euclideanDistance, true,
-    "CORRECTED per GarmentCodeData arxiv.org/abs/2405.17609v3 App. 0.B: " ++
-    "'we compute the respective distances between the two landmarks' — " ++
-    "a straight 3D chord, NOT a surface geodesic. LeftArm bone vertex " ++
-    "(6058) -> RightArm bone vertex (10523); real EUCLIDEAN 28.30cm — this " ++
-    "also matches the paper's own accuracy discussion (Sec. 4.1: 'we " ++
-    "measure on top of the shoulder ball joint', confirming the landmark " ++
-    "pick). Prior value (33.76cm geodesic) was the wrong OPERATION, kept " ++
-    "in CHANGELOG.md's log rather than silently erased."⟩,
-  ⟨"neck_w", "cm", .edgeLoopLength, true,
-    "CORRECTED per GarmentCodeData App. 0.B: 'We use the Euclidean edge " ++
-    "loop length to measure the neck width and wrist circumference' — " ++
-    "this is a FULL LOOP's straight-segment perimeter, not a left-right " ++
-    "chord. Real 34.79cm (neck ring at z=0.5103). Prior value (14.73cm, " ++
-    "a left-right chord across the ring) used the wrong definition " ++
-    "entirely, not just the wrong operation — kept in CHANGELOG.md."⟩,
+  ⟨"shoulder_w", "cm", .surfaceDistance, true,
+    "REVERTED to geodesic 2026-11-08 (iFire: 'use geodesic for the " ++
+    "ones that seem like tape measurable' — a tailor runs the tape " ++
+    "ALONG the trapezius from shoulder point to shoulder point, never " ++
+    "straight through the air). LeftArm bone vertex (6058) -> RightArm " ++
+    "bone vertex (10523); real GEODESIC_LENGTH 33.76cm — this is a " ++
+    "DELIBERATE, STATED deviation from the published reference's literal " ++
+    "Euclidean operation (28.30cm), kept for tape-measure fidelity over " ++
+    "literal reference-code fidelity — PR #7"⟩,
+  ⟨"neck_w", "cm", .circumference, true,
+    "REVERTED to geodesic 2026-11-08 (iFire: 'use geodesic for the ones " ++
+    "that seem like tape measurable' — a tape wraps AROUND the neck). " ++
+    "Real Delaunay-tightened closed loop over the full neck ring " ++
+    "(z=0.5103); real DELAUNAY_LENGTH 41.12cm — a DELIBERATE, STATED " ++
+    "deviation from the published reference's literal Euclidean edge-" ++
+    "loop-length operation (34.79cm), kept for tape-measure fidelity — " ++
+    "PR #7"⟩,
   ⟨"back_width", "cm", .surfaceDistance, true,
     "surface path across the BACK half of the bust ring (z=0.2966), " ++
     "vertex 16650 (row55/col56) <-> vertex 14388 (row53/col3); real " ++
@@ -136,12 +140,14 @@ def fields : Array Field := #[
     "landmark and the highest point of the head', not jaw-to-crown. Axis " ++
     "extent, HeadEnd bone z - Neck1/Neck2 midpoint z; real 23.37cm (prior " ++
     "jaw-based 14.80cm used the wrong lower landmark) — PR #5"⟩,
-  ⟨"armscye_depth", "cm", .euclideanDistance, true,
-    "CORRECTED per GarmentCodeData App. 0.B (grouped with shoulder_w/" ++
-    "bust_points/bum_points as straight-line landmark distances). " ++
-    "LeftShoulder bone vertex (2265) -> bust ring's left-most (underarm-" ++
-    "side) vertex (10655); real EUCLIDEAN 21.21cm (prior 26.60cm was the " ++
-    "geodesic, wrong operation) — PR #5"⟩,
+  ⟨"armscye_depth", "cm", .surfaceDistance, true,
+    "REVERTED to geodesic 2026-11-08 (iFire: 'use geodesic for the ones " ++
+    "that seem like tape measurable' — a tailor drapes the tape down the " ++
+    "FRONT of the body from shoulder to underarm). LeftShoulder bone " ++
+    "vertex (2265) -> bust ring's left-most (underarm-side) vertex " ++
+    "(10655); real GEODESIC_LENGTH 26.60cm — a DELIBERATE, STATED " ++
+    "deviation from the published reference's literal Euclidean " ++
+    "operation (21.21cm) — PR #7"⟩,
   ⟨"bust_line", "cm", .heightMarker, false,
     "GarmentCodeData App. 0.B reveals this is NOT a sampling-height " ++
     "scalar but a real frontal-torso polyline LENGTH (parasagittal-plane " ++
@@ -167,16 +173,21 @@ def fields : Array Field := #[
     "prior axisExtent value (10.93cm, a straight z-difference) is a " ++
     "DOCUMENTED SIMPLIFICATION, not the published method — marked " ++
     "unsettled again pending a real parasagittal-plane-cut implementation"⟩,
-  ⟨"bust_points", "cm", .euclideanDistance, true,
-    "CORRECTED per GarmentCodeData App. 0.B: straight 3D distance between " ++
-    "the bust_left/bust_right landmarks (the bust ring's left-most " ++
-    "vertex 10655 and right-most vertex 6190), not a surface path; real " ++
-    "EUCLIDEAN 24.94cm (prior 32.77cm was the geodesic) — PR #5"⟩,
-  ⟨"bum_points", "cm", .euclideanDistance, true,
-    "CORRECTED per GarmentCodeData App. 0.B: straight 3D distance between " ++
-    "the bum_left/bum_right landmarks (hips ring's left-most vertex " ++
-    "16772, right-most vertex 14510); real EUCLIDEAN 31.11cm (prior " ++
-    "39.90cm was the geodesic) — PR #5"⟩,
+  ⟨"bust_points", "cm", .surfaceDistance, true,
+    "REVERTED to geodesic 2026-11-08 (iFire: 'use geodesic for the ones " ++
+    "that seem like tape measurable' — nipple-to-nipple is tape-draped " ++
+    "across the chest, never a straight chord through the body). Surface " ++
+    "path between the bust ring's left-most vertex 10655 and right-most " ++
+    "vertex 6190; real GEODESIC_LENGTH 32.77cm — a DELIBERATE, STATED " ++
+    "deviation from the published reference's literal Euclidean " ++
+    "operation (24.94cm) — PR #7"⟩,
+  ⟨"bum_points", "cm", .surfaceDistance, true,
+    "REVERTED to geodesic 2026-11-08 (iFire: 'use geodesic for the ones " ++
+    "that seem like tape measurable'). Surface path between the hips " ++
+    "ring's left-most vertex 16772 and right-most vertex 14510; real " ++
+    "GEODESIC_LENGTH 39.90cm — a DELIBERATE, STATED deviation from the " ++
+    "published reference's literal Euclidean operation (31.11cm) — " ++
+    "PR #7"⟩,
   ⟨"shoulder_incl", "deg", .angle, true,
     "REAL formula from the published reference implementation " ++
     "(github.com/mbotsch/GarmentMeasurements measure_body.cpp's " ++

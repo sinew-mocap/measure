@@ -6,14 +6,7 @@ A flat plane cut through a body mesh is not what a tailor's tape reads, and most
 
 ![ANNY-SOMA-X — real x-ray render, Godot order-independent transparency (AVBOIT)](docs/images/anny-soma-x-xray-oit.png)
 
-A real x-ray render: the ANNY-SOMA-X mesh as ONE translucent surface, rendered through Godot's real AVBOIT (adaptive volumetric bucket order-independent transparency, `entities-godot` branch `dev/order-independent-transparency`) — every layer of the body (front skin, back skin, the double fold at the eyes/mouth/nostrils) is depth-correctly composited regardless of triangle draw order, which a plain alpha-blend pass cannot do. The 16 real measurement curves/lines from below are overlaid in green (real geodesics/loops) and yellow (real Euclidean straight-line fields).
-
-<details>
-<summary>Prior wireframe diagram (superseded 2026-11-08, kept for reference)</summary>
-
-![ANNY-SOMA-X — 26 GarmentCode measurement locations, real wireframe](docs/images/anny-soma-x-measurement-locations.svg)
-
-</details>
+A real x-ray render: the ANNY-SOMA-X mesh as ONE translucent surface, rendered through Godot's real AVBOIT (adaptive volumetric bucket order-independent transparency, `entities-godot` branch `dev/order-independent-transparency`) — every layer of the body (front skin, back skin, the double fold at the eyes/mouth/nostrils) is depth-correctly composited regardless of triangle draw order, which a plain alpha-blend pass cannot do. The 16 real measurement curves/lines from below are overlaid in green (real surface geodesics/loops — including shoulder_w, armscye_depth, bust_points, bum_points, neck_w and wrist, which deliberately use the real geodesic over the published reference's literal Euclidean operation, because a physical tailor's tape follows the body's surface for all six) and amber (`head_l`, a straight axis extent — a tailor uses a rule, not a draped tape, for height-style measurements), with leader-line callouts to margin labels, the standard diagramming technique, instead of text sitting on the body.
 
 Green = 22 of 26 fields with real vertex/geodesic/axis-extent data, every landmark addressed through the real ChArUco suit board (Godot `lightmap_unwrap`, the same toolchain the physical mocap suit uses), not a raw mesh vertex id. Values re-derived against the actual published reference implementation ([`mbotsch/GarmentMeasurements`](https://github.com/mbotsch/GarmentMeasurements), the real C++ source behind [GarmentCodeData](https://arxiv.org/abs/2405.17609v3)), not just the paper's prose.
 

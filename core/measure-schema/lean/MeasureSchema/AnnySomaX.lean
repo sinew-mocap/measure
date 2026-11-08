@@ -35,18 +35,17 @@ def annySomaXPartial : List (String × Float) := [
 
 /-- Sanity: every name in the fixture must be a real field of the schema
 (catches a typo'd field name silently going unchecked), and every one of
-those fields must itself be classified `circumference`, `axisExtent`, or
-`edgeLoopLength` (wrist was reclassified from `circumference` to
-`edgeLoopLength` after reading the published reference implementation —
-see `annySomaXFrontier`'s module doc) — the mechanically well-defined
-subset a plane cross-section can answer at all, consistent with how
-these 7 were actually computed. -/
+those fields must itself be classified `circumference` or `axisExtent` —
+the mechanically well-defined subset a plane cross-section can answer at
+all, consistent with how these 7 were actually computed. (`wrist` is
+back to `circumference` as of the 2026-11-08 geodesic-reversion pass —
+see `annySomaXFrontier`'s module doc.) -/
 def annySomaXFixtureIsConsistent : Bool := Id.run do
   for (name, _) in annySomaXPartial do
     match fields.find? (·.name == name) with
     | none => return false
     | some f =>
-      if f.kind != .circumference && f.kind != .axisExtent && f.kind != .edgeLoopLength then
+      if f.kind != .circumference && f.kind != .axisExtent then
         return false
   return true
 
@@ -109,26 +108,34 @@ clavicle-root bones) was rejected by its own plausibility gate for
 measuring an anatomically-impossible 2.89cm — see that PR and the
 CHANGELOG for the rejected attempt, kept in the log rather than erased.
 
-VALUES BELOW ARE THE CORRECTED ones (2026-11-08, second pass) after
-reading the published reference implementation
+A second pass (PR #6) read the published reference implementation
 (`github.com/mbotsch/GarmentMeasurements`, the actual C++ source behind
-GarmentCodeData, arxiv.org/abs/2405.17609v3): `shoulder_w`,
-`armscye_depth`, `bust_points`, `bum_points` are EUCLIDEAN straight-line
-distances (not geodesics — the published `measure_landmark_distance_euclidean`
-function); `neck_w` is an `edgeLoopLength` (the published
-`measure_vertex_trace` over a full neck ring, not a left-right chord);
-`head_l` uses the neck landmark as its lower bound (not the jaw); the 3
-angle fields use the published `angle_plane_vec` formula (plane-normal
-vs. landmark-vector angle) over a horizontal or median-plane reference,
-not a bone-rotation comparison. The ORIGINAL (now-superseded) values are
-kept in CHANGELOG.md's log, not silently erased. -/
+GarmentCodeData, arxiv.org/abs/2405.17609v3) and switched `shoulder_w`,
+`armscye_depth`, `bust_points`, `bum_points` to its literal Euclidean
+straight-line operation, and `neck_w`/`wrist` to its literal Euclidean
+edge-loop-length operation.
+
+A THIRD pass (2026-11-08, PR #7, iFire: "you must use geodesic for the
+ones that seem like tape masurable") reverted ALL SIX of those back to
+the real surface geodesic / Delaunay-tightened closed loop: a tailor's
+physical tape follows the body's surface for every one of these
+(shoulder-to-shoulder over the trapezius, shoulder-to-underarm down the
+front, nipple-to-nipple across the chest, hip-point-to-hip-point,
+around the neck, around the wrist) — a DELIBERATE, STATED deviation
+from the published reference's literal (and, for these six, less
+physically faithful) Euclidean choice. `head_l` stays an axis extent
+(a tailor uses a straight rule for height-style measurements, not a
+draped tape over the scalp) and the 3 angle fields are unaffected
+(`angle_plane_vec`, plane-normal vs. landmark-vector angle, not a
+bone-rotation comparison). Every superseded value from both prior
+passes is kept in CHANGELOG.md's log, not silently erased. -/
 def annySomaXFrontier : List (String × Float) := [
-  ("shoulder_w", 28.30), ("neck_w", 34.79), ("back_width", 30.57),
+  ("shoulder_w", 33.76), ("neck_w", 41.12), ("back_width", 30.57),
   ("hip_back_width", 37.41), ("waist_back_width", 27.96),
-  ("head_l", 23.37), ("armscye_depth", 21.21),
+  ("head_l", 23.37), ("armscye_depth", 26.60),
   ("vert_bust_line", 21.37),
-  ("bust_points", 24.94), ("bum_points", 31.11),
-  ("wrist", 13.54), ("leg_circ", 52.26),
+  ("bust_points", 32.77), ("bum_points", 39.90),
+  ("wrist", 14.82), ("leg_circ", 52.26),
   ("shoulder_incl", 29.06), ("hip_inclination", -13.07), ("arm_pose_angle", 43.90)
 ]
 
@@ -157,19 +164,20 @@ def annySomaXSuitBoardCells : List (String × SuitBoardCell) := [
 ]
 
 /-- Sanity: every frontier field is a real schema field, classified
-`surfaceDistance`, `axisExtent`, `euclideanDistance`, `edgeLoopLength`,
-`circumference`, or `angle` — the kinds `annySomaXFrontier` actually
-covers after the 2026-11-08 correction pass (see that constant's module
-doc). `heightMarker` is NOT included: `waist_over_bust_line` was
-dropped from this fixture entirely rather than kept under the wrong
-kind — see CHANGELOG.md. -/
+`surfaceDistance`, `axisExtent`, `circumference`, or `angle` — the
+kinds `annySomaXFrontier` actually covers after the 2026-11-08
+geodesic-reversion pass (see that constant's module doc: `shoulder_w`,
+`armscye_depth`, `bust_points`, `bum_points` moved back to
+`surfaceDistance`; `neck_w`, `wrist` moved back to `circumference`).
+`heightMarker` is NOT included: `waist_over_bust_line` was dropped from
+this fixture entirely rather than kept under the wrong kind — see
+CHANGELOG.md. -/
 def annySomaXFrontierFixtureIsConsistent : Bool := Id.run do
   for (name, _) in annySomaXFrontier do
     match fields.find? (·.name == name) with
     | none => return false
     | some f =>
       if f.kind != .surfaceDistance && f.kind != .axisExtent &&
-         f.kind != .euclideanDistance && f.kind != .edgeLoopLength &&
          f.kind != .circumference && f.kind != .angle then
         return false
   return true

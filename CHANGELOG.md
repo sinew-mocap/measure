@@ -192,6 +192,64 @@ layer. `docs/images/anny-soma-x-xray-oit.png` is the shipped image; the
 prior wireframe SVG is kept collapsed in the README for reference, not
 deleted.
 
+### Leader-line callouts: "drag a line away from the text"
+
+iFire: "you have to use standard diagramming techniques and drag a
+line away from the text". Text sitting directly on the curve/body it
+describes is not a standard diagram convention. Replaced per-curve
+inline labels with real leader-line callouts (`_layout_callouts`/
+`_place_column`/`_draw_leader` in `adapters/xray_oit_render.gd`):
+every field's real anchor point (its curve's midpoint, screen-
+projected via `Camera3D.unproject_position`) is bucketed left/right of
+image centre, evenly spaced vertically within its margin column to
+avoid overlap, and connected to its label at the margin by an elbow
+`Line2D` plus a small dot marking the exact measurement point —
+exactly the convention anatomical/engineering diagrams use, not text
+pasted on top of the subject.
+
+### Reverted to geodesic for tape-measurable fields
+
+iFire: "you must use geodesic for the ones that seem like tape
+masurable". The published reference's literal choice to use a straight
+Euclidean chord for `shoulder_w`/`armscye_depth`/`bust_points`/
+`bum_points` (and a straight edge-loop length for `neck_w`/`wrist`) is
+not what a physical tailor's tape actually does for any of these six:
+a tape is draped ALONG the body's surface — over the trapezius for
+shoulder width, down the front for armscye depth, across the chest for
+bust points, around the neck, around the wrist. Reverted all six back
+to the real `flip_geodesics` surface geodesic / Delaunay-tightened
+closed loop, a deliberate, stated deviation from
+`mbotsch/GarmentMeasurements`'s literal code for these ones in
+particular. Every value, old (Euclidean) → new (geodesic):
+
+- `shoulder_w`: 28.30cm → **33.76cm**
+- `armscye_depth`: 21.21cm → **26.60cm**
+- `bust_points`: 24.94cm → **32.77cm**
+- `bum_points`: 31.11cm → **39.90cm**
+- `neck_w`: 34.79cm (edge-loop length) → **41.12cm** (Delaunay loop)
+- `wrist`: 13.54cm (edge-loop length) → **14.82cm** (Delaunay loop)
+
+`head_l` stays an axis extent (a tailor uses a rule, not a draped
+tape, for height-style measurements) and the 3 angle fields are
+unaffected. `MeasureSchema.lean`'s `euclideanDistance`/`edgeLoopLength`
+kinds stay in the schema (they are real, cited operations the
+published reference genuinely uses, useful if this package ever wants
+to report BOTH numbers) but no field uses them after this reversion;
+`shoulder_w`/`armscye_depth`/`bust_points`/`bum_points` are back to
+`surfaceDistance`, `neck_w`/`wrist` back to `circumference`.
+Published as a real PR (`datasource-anny-render-corpus` PR #7,
+merged) rather than left as uncommitted local script changes a
+downstream repo's docs cited by number.
+
+### One image, not two
+
+iFire: "avoid having two images. we only want one image for the
+readme". The README's collapsed `<details>` block holding the
+superseded matplotlib wireframe SVG is removed entirely (not just
+hidden); `docs/images/anny-soma-x-measurement-locations.svg` is
+deleted from the repo. The real x-ray OIT render is now the only
+image.
+
 ### Light background, real text labels on the x-ray
 
 iFire: "use a light background so we can put text on it". Changed

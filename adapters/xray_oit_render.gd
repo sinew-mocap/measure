@@ -18,7 +18,6 @@ extends SceneTree
 # depth order regardless of triangle draw order -- the actual point of
 # OIT, and the actual point of an x-ray view of a body mesh.
 
-const USDA_PATH := "/Users/ernest.lee/3-interactor/meshing-pen/6-datasource/anny-render-corpus/build/anny_export/anny-soma-x.usda"
 const OBJ_PATH := "/Users/ernest.lee/3-interactor/meshing-pen/6-datasource/anny-render-corpus/build/anny_export/anny-soma-x.obj"
 const OUT_PNG := "/Users/ernest.lee/3-interactor/meshing-pen/6-datasource/anny-render-corpus/build/anny_export/anny_xray_oit.png"
 
@@ -166,7 +165,7 @@ func _add_measurement_overlays(cam: Camera3D, label_layer: CanvasLayer) -> void:
 	const AMBER := Color(0.75, 0.42, 0.0, 1.0)    # dark amber: real Euclidean straight-line fields
 
 	var manifest = _load_json(MANIFEST)
-	var overlay_count := 0
+	var callouts: Array = []   # [{name, anchor: Vector3, color: Color}]
 	const CORPUS_ROOT := "/Users/ernest.lee/3-interactor/meshing-pen/6-datasource/anny-render-corpus/"
 	if manifest != null:
 		for field_name in manifest.keys():
@@ -184,12 +183,17 @@ func _add_measurement_overlays(cam: Camera3D, label_layer: CanvasLayer) -> void:
 			var closed: bool = field_name in ["waist", "hips", "bust", "underbust", "leg_circ", "wrist"]
 			var mi := _line_mesh(pts, BRIGHT, closed)
 			root.add_child(mi)
-			_add_label(label_layer, cam, pts[pts.size() / 2], field_name, BRIGHT)
-			overlay_count += 1
+			callouts.append({"name": field_name, "anchor": pts[pts.size() / 2], "color": BRIGHT})
 
 	var euclid = _load_json(EUCLID)
 	if euclid != null:
-		for field_name in ["shoulder_w", "armscye_depth", "bust_points", "bum_points", "head_l"]:
+		# shoulder_w, armscye_depth, bust_points, bum_points moved to the
+		# real geodesic manifest above (iFire: "use geodesic for the ones
+		# that seem like tape measurable" -- a tailor runs the tape along
+		# the surface for all four). head_l remains a straight axis
+		# extent (a tailor uses a rule/stadiometer for height-style
+		# measurements, not a draped tape over the scalp).
+		for field_name in ["head_l"]:
 			if not euclid.has(field_name) or euclid[field_name] == null:
 				continue
 			var pair = euclid[field_name]
@@ -198,27 +202,91 @@ func _add_measurement_overlays(cam: Camera3D, label_layer: CanvasLayer) -> void:
 				pts.append(Vector3(p[0], p[1], p[2]))
 			var mi := _line_mesh(pts, AMBER, false)
 			root.add_child(mi)
-			_add_label(label_layer, cam, (pts[0] + pts[1]) / 2.0, field_name, AMBER)
-			overlay_count += 1
-		if euclid.has("neck_w_loop") and euclid["neck_w_loop"] != null:
-			var pts2 := PackedVector3Array()
-			for p in euclid["neck_w_loop"]:
-				pts2.append(Vector3(p[0], p[1], p[2]))
-			var mi2 := _line_mesh(pts2, BRIGHT, true)
-			root.add_child(mi2)
-			_add_label(label_layer, cam, pts2[0], "neck_w", BRIGHT)
-			overlay_count += 1
+			callouts.append({"name": field_name, "anchor": (pts[0] + pts[1]) / 2.0, "color": AMBER})
 
-	print("added ", overlay_count, " real measurement overlay curves")
+	_layout_callouts(label_layer, cam, callouts)
+	print("added ", callouts.size(), " real measurement overlay curves")
 
 
-func _add_label(label_layer: CanvasLayer, cam: Camera3D, world_pos: Vector3, text: String, color: Color) -> void:
-	var screen_pos := cam.unproject_position(world_pos)
+# Standard diagramming technique: a leader line drawn from the real
+# measurement point OUT to a margin column, with the text label at the
+# far end of the leader -- not text sitting on top of the curve/body it
+# describes. Anchors are bucketed left/right of the image centre (so a
+# leader never has to cross the body) and evenly spaced vertically
+# within each margin to avoid label overlap, same idea standard
+# anatomical/engineering diagrams use.
+func _layout_callouts(label_layer: CanvasLayer, cam: Camera3D, callouts: Array) -> void:
+	var w := float(root.size.x)
+	var h := float(root.size.y)
+	var left: Array = []
+	var right: Array = []
+	for c in callouts:
+		var screen := cam.unproject_position(c["anchor"])
+		c["screen"] = screen
+		if screen.x < w / 2.0:
+			left.append(c)
+		else:
+			right.append(c)
+	left.sort_custom(func(a, b): return a["screen"].y < b["screen"].y)
+	right.sort_custom(func(a, b): return a["screen"].y < b["screen"].y)
+
+	var margin_top := 40.0
+	var margin_bottom := h - 40.0
+	var left_x := 195.0
+	var right_x := w - 195.0
+
+	_place_column(label_layer, left, left_x, margin_top, margin_bottom, false)
+	_place_column(label_layer, right, right_x, margin_top, margin_bottom, true)
+
+
+func _place_column(label_layer: CanvasLayer, items: Array, margin_x: float,
+		top: float, bottom: float, right_aligned: bool) -> void:
+	var n := items.size()
+	if n == 0:
+		return
+	var step: float = (bottom - top) / max(1, n - 1) if n > 1 else 0.0
+	for i in n:
+		var c = items[i]
+		var anchor: Vector2 = c["screen"]
+		var label_y: float = top + step * i if n > 1 else (top + bottom) / 2.0
+		var label_pos := Vector2(margin_x, label_y)
+		_draw_leader(label_layer, anchor, label_pos, c["color"])
+		_add_label(label_layer, label_pos, c["name"], c["color"], right_aligned)
+
+
+# Elbow leader line (anchor -> horizontal run -> margin column), the
+# standard callout shape, drawn with Line2D in screen space -- plus a
+# small dot marking the exact measurement point on the body/curve.
+func _draw_leader(label_layer: CanvasLayer, anchor: Vector2, label_pos: Vector2, color: Color) -> void:
+	var elbow := Vector2(label_pos.x, anchor.y)
+	var line := Line2D.new()
+	line.width = 1.0
+	line.default_color = Color(color.r, color.g, color.b, 0.75)
+	line.add_point(anchor)
+	line.add_point(elbow)
+	line.add_point(Vector2(label_pos.x, label_pos.y))
+	label_layer.add_child(line)
+
+	var dot := Line2D.new()  # a tiny filled circle approximation via a short thick point
+	dot.width = 5.0
+	dot.default_color = color
+	dot.add_point(anchor - Vector2(0.01, 0))
+	dot.add_point(anchor + Vector2(0.01, 0))
+	label_layer.add_child(dot)
+
+
+func _add_label(label_layer: CanvasLayer, screen_pos: Vector2, text: String, color: Color, right_aligned: bool) -> void:
 	var lbl := Label.new()
 	lbl.text = text
 	lbl.add_theme_color_override("font_color", color)
-	lbl.add_theme_color_override("font_outline_color", Color(1, 1, 1, 0.9))
+	lbl.add_theme_color_override("font_outline_color", Color(1, 1, 1, 0.95))
 	lbl.add_theme_constant_override("outline_size", 3)
-	lbl.add_theme_font_size_override("font_size", 14)
-	lbl.position = screen_pos
+	lbl.add_theme_font_size_override("font_size", 13)
+	lbl.size = Vector2(170, 16)
+	if right_aligned:
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		lbl.position = Vector2(screen_pos.x, screen_pos.y - 8)
+	else:
+		lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		lbl.position = Vector2(screen_pos.x - 170, screen_pos.y - 8)
 	label_layer.add_child(lbl)
