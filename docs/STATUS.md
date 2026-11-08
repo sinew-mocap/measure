@@ -90,6 +90,52 @@ editor, opened the real hand-authored USDA and reported back
 cast; triangle indices byte-exact) — `adapters/usd_roundtrip_mesh_sample.json`
 is a summary of the verified round-trip output.
 
+## IMPORTANT: measurement algorithm re-derived from the REAL published reference implementation (2026-11-08)
+
+iFire pointed to the actual papers and repos
+(arxiv.org/abs/2405.17609v3's own body-measurement diagram and Appendix
+0.B, then `github.com/maria-korosteleva/GarmentCode` →
+`github.com/mbotsch/GarmentMeasurements`, the real C++ source behind
+GarmentCodeData's measurements). Reading the ACTUAL `.mes` JSON recipes
+and `measure_body.cpp`/`measurement_utils.cpp` source (not just the
+paper's prose) overturned several of this package's prior method
+choices:
+
+- `shoulder_w`, `armscye_depth`, `bust_points`, `bum_points`: the
+  published `measure_landmark_distance_euclidean` is a plain 3D
+  Euclidean (straight-line) distance — NOT a surface geodesic. New
+  `MeasurementKind.euclideanDistance` added to the schema to represent
+  this distinct operation; all four fields' values corrected.
+- `neck_w`, `wrist`: the published `measure_vertex_trace` is the sum of
+  straight-line distances between consecutive vertices of a hand-picked
+  LOOP (a full ring, not a left-right chord). New
+  `MeasurementKind.edgeLoopLength` added; both fields' values corrected
+  (`neck_w` in particular was previously computed as a left-right chord
+  across the neck, the wrong DEFINITION, not just the wrong operation).
+- `leg_circ`: the published method shifts the plane down until both legs
+  separate into two loops, then takes the MINIMUM of the two at that
+  ONE height — not a scan along the limb for a maximum. Value corrected.
+- `head_l`: the published `measure_head_l` measures from the
+  `nape_of_neck` landmark to the crown — not jaw-to-crown. Value
+  corrected.
+- `shoulder_incl`, `hip_inclination`, `arm_pose_angle`: the published
+  `angle_plane_vec` formula (`theta = acos(dot(planeNormal, landmarkVector)) - pi/2`,
+  result `= -theta` in degrees) uses a plain axis-aligned reference
+  plane (horizontal for the first and third, the median/sagittal plane
+  for the second) and a landmark-pair vector — not a bone-rotation
+  comparison. All three now real, computed values (not approximate
+  markers).
+- `bust_line`, `waist_over_bust_line`: the published algorithm computes
+  these as real parasagittal-plane-cut polyline LENGTHS along the front
+  torso, not a simple axis-aligned z-difference or sampling-height
+  scalar. This package's existing method is a documented
+  SIMPLIFICATION, not the published one — both fields correctly
+  REVERTED to unsettled (24/26 settled today, honestly, not 26/26 under
+  a method known to be wrong for these two).
+
+See CHANGELOG.md for every corrected value (old vs. new) and the exact
+source citations.
+
 ## Why open path and closed loop are NOT the same operation
 
 A human body mesh is topologically a sphere (genus 0): every CLOSED LOOP

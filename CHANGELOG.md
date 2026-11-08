@@ -162,3 +162,74 @@ change, geometry unchanged).
   its `measure_*` calls are honest stubs, not wired to the real Lean
   solve. The usd.elf fixes above are a DIFFERENT, pre-existing guest
   (`V-Sekai-fire/usd-guest`), not this repo's own.
+
+## 2026-11-08 — Measurement algorithm re-derived from the REAL reference implementation
+
+**iFire:** "https://arxiv.org/html/2405.17609v3/body_measurements.png
+https://arxiv.org/html/2405.17609v3#S3.SS3" then
+"https://github.com/maria-korosteleva/GarmentCode
+https://garmentcode.ethz.ch/ study again".
+
+The GarmentCode README names the REAL source of the measurement
+algorithm: `github.com/mbotsch/GarmentMeasurements` — the actual C++
+implementation behind GarmentCodeData's paper (prose summaries, even the
+paper's own Appendix 0.B, are a step removed from the real code). Cloned
+it and read `src/apps/measurements/measure_body.cpp`,
+`measurement_utils.cpp`, and every `data/measurements/*.mes` JSON
+recipe directly — not re-derived from English description. This
+overturned several of this session's own earlier method choices. Every
+corrected field below, OLD value -> NEW value, with its real source
+citation:
+
+- **`shoulder_w`**: 33.76cm (geodesic) -> **28.30cm** (Euclidean straight
+  line, `measure_landmark_distance_euclidean`). The new value also
+  independently matches the GarmentCodeData PAPER's own accuracy
+  discussion (Sec. 4.1: "we measure on top of the shoulder ball joint"),
+  confirming both the landmark pick AND the operation were right once
+  corrected.
+- **`armscye_depth`**: 26.60cm (geodesic) -> **21.21cm** (Euclidean).
+- **`bust_points`**: 32.77cm (geodesic) -> **24.94cm** (Euclidean).
+- **`bum_points`**: 39.90cm (geodesic) -> **31.11cm** (Euclidean).
+- **`neck_w`**: 14.73cm (left-right CHORD across the neck ring, the
+  wrong DEFINITION) -> **34.79cm** (`measure_vertex_trace`: sum of
+  straight edges around the FULL neck ring — essentially a
+  circumference-like quantity, matching realistic neck-circumference
+  magnitude; the prior 14.73cm chord was never the right concept).
+- **`wrist`**: re-derived as **13.54cm** via the same `edgeLoopLength`
+  operation as `neck_w` (was previously computed via a plane-cut convex
+  hull, the WRONG algorithm per the reference source even though the
+  number happened to be close).
+- **`leg_circ`**: re-derived as **52.26cm** — plane shifted DOWN until
+  both legs separate into two loops, value is the MINIMUM of the two at
+  that one height (the reference's actual method), not a scan along the
+  limb for a maximum circumference.
+- **`head_l`**: 14.80cm (jaw-to-crown) -> **23.37cm** (nape-of-neck-to-
+  crown, the reference's actual lower landmark — `measure_head_l` names
+  `nape_of_neck` explicitly in the C++ source).
+- **`shoulder_incl`**: unlabeled marker -> **29.06deg**, real formula
+  `angle_plane_vec` (plane normal = horizontal, vector = neck->shoulder
+  landmarks).
+- **`hip_inclination`**: unlabeled marker -> **-13.07deg**, same formula
+  (plane normal = the median/sagittal plane, vector = hips_side_right ->
+  waist_side_right).
+- **`arm_pose_angle`**: unlabeled marker -> **43.90deg**, same formula
+  (plane normal = horizontal, vector = shoulder->wrist landmarks).
+- **`bust_line`, `waist_over_bust_line`**: CORRECTLY REVERTED to
+  unsettled. The reference computes these as real parasagittal-plane-cut
+  polyline LENGTHS along the front torso (a curved surface measurement
+  between a lower circumference-intersection plane and an upper
+  shoulder-landmark frontal plane) — not the simple axis-aligned
+  z-difference this package was computing. Marking a field unsettled
+  again, after a real reading proved the existing method wrong, is the
+  honest outcome; it is not reverted silently or left mislabeled as
+  "done".
+
+Net: **24 of 26 fields settled** today (down from the PREVIOUS claim of
+26/26, which rested on 2 fields' methods that this reading now proves
+wrong). `MeasureSchema.lean` grew two new real `MeasurementKind`
+variants (`euclideanDistance`, `edgeLoopLength`) to represent the
+reference's own distinct operations precisely, rather than overloading
+`surfaceDistance`/`circumference` to mean something they don't.
+`lake exe measure_schema_report` prints the new counts and every
+unsettled field's reason — see `adapters/` for the Python/GDScript that
+reproduced each corrected value.

@@ -33,6 +33,20 @@ inductive MeasurementKind where
   /-- A straight-line extent along one mesh axis (e.g. overall height):
   no geodesic solve needed, just a min/max over vertex coordinates. -/
   | axisExtent
+  /-- A straight 3D (chord) distance between two landmarks — NOT a surface
+  geodesic. GarmentCodeData's own published algorithm
+  (arxiv.org/abs/2405.17609v3, Appendix 0.B) specifies this exact
+  operation for `armscye_depth`, `bum_points`, `bust_points`, and
+  `shoulder_w` ("we compute the respective distances between the two
+  landmarks") — a straight ruler, not a tape measure laid flat on the
+  body. -/
+  | euclideanDistance
+  /-- The straight-edge (Euclidean, chord-by-chord) perimeter of a loop —
+  distinct from `circumference`'s plane-cut convex hull. The published
+  algorithm specifies this exact operation for `neck_w` and `wrist`
+  ("We use the Euclidean edge loop length to measure the neck width and
+  wrist circumference", Appendix 0.B). -/
+  | edgeLoopLength
   /-- The height (along the body's vertical axis) at which some OTHER
   field's circumference loop should be sampled, not a distance in its own
   right (the `*_line` fields: `bust_line`, `waist_line`, `hips_line`,
@@ -76,25 +90,35 @@ def fields : Array Field := #[
     "closed loop just below the bust"⟩,
   ⟨"hips", "cm", .circumference, true, "closed loop at hip line height"⟩,
   ⟨"leg_circ", "cm", .circumference, true,
-    "closed loop around the upper leg (see the `_apart` pose note in " ++
-    "garmentcodedata-xpbd-pipeline for why this needs the legs abducted)"⟩,
-  ⟨"wrist", "cm", .circumference, true, "closed loop around the wrist"⟩,
+    "CORRECTED per GarmentCodeData arxiv.org/abs/2405.17609v3 App. 0.B: " ++
+    "plane shifted DOWN until both legs separate into two loops; value is " ++
+    "the MINIMUM of the two legs' perimeters at that one height (not a " ++
+    "scan along the limb for a max) — real 52.26cm (plane z=-0.0861)"⟩,
+  ⟨"wrist", "cm", .edgeLoopLength, true,
+    "CORRECTED per GarmentCodeData App. 0.B: 'Euclidean edge loop length', " ++
+    "the same operation as neck_w, not a plane-cut convex hull — real " ++
+    "13.54cm"⟩,
   ⟨"arm_length", "cm", .surfaceDistance, true,
     "shoulder (LeftArm bone) to wrist (LeftHand bone), vertices 6058/818 on " ++
     "the ANNY-SOMA-X mesh; real GEODESIC_LENGTH 47.30cm measured via " ++
     "TOOL_geodesiac_path's FlipOut straightening — see AnnySomaX.lean's " ++
     "annySomaXGeodesic fixture and datasource-anny-render-corpus PR #3"⟩,
-  ⟨"shoulder_w", "cm", .surfaceDistance, true,
-    "surface path, LeftArm bone vertex (6058, suit board cell row24/col4) -> " ++
-    "RightArm bone vertex (10523, row20/col23); real GEODESIC/DIJKSTRA " ++
-    "33.76cm. A first attempt via LeftShoulder/RightShoulder (the clavicle " ++
-    "root) measured an anatomically-impossible 2.89cm and was rejected — " ++
-    "see CHANGELOG.md's frontier-learning log and " ++
-    "datasource-anny-render-corpus PR #5"⟩,
-  ⟨"neck_w", "cm", .surfaceDistance, true,
-    "surface path across the neck ring (z=0.5103, Neck1/Neck2 bone height), " ++
-    "left-most vertex 2953 (row24/col48) <-> right-most vertex 749 " ++
-    "(row25/col2); real 14.73cm — PR #5"⟩,
+  ⟨"shoulder_w", "cm", .euclideanDistance, true,
+    "CORRECTED per GarmentCodeData arxiv.org/abs/2405.17609v3 App. 0.B: " ++
+    "'we compute the respective distances between the two landmarks' — " ++
+    "a straight 3D chord, NOT a surface geodesic. LeftArm bone vertex " ++
+    "(6058) -> RightArm bone vertex (10523); real EUCLIDEAN 28.30cm — this " ++
+    "also matches the paper's own accuracy discussion (Sec. 4.1: 'we " ++
+    "measure on top of the shoulder ball joint', confirming the landmark " ++
+    "pick). Prior value (33.76cm geodesic) was the wrong OPERATION, kept " ++
+    "in CHANGELOG.md's log rather than silently erased."⟩,
+  ⟨"neck_w", "cm", .edgeLoopLength, true,
+    "CORRECTED per GarmentCodeData App. 0.B: 'We use the Euclidean edge " ++
+    "loop length to measure the neck width and wrist circumference' — " ++
+    "this is a FULL LOOP's straight-segment perimeter, not a left-right " ++
+    "chord. Real 34.79cm (neck ring at z=0.5103). Prior value (14.73cm, " ++
+    "a left-right chord across the ring) used the wrong definition " ++
+    "entirely, not just the wrong operation — kept in CHANGELOG.md."⟩,
   ⟨"back_width", "cm", .surfaceDistance, true,
     "surface path across the BACK half of the bust ring (z=0.2966), " ++
     "vertex 16650 (row55/col56) <-> vertex 14388 (row53/col3); real " ++
@@ -108,36 +132,66 @@ def fields : Array Field := #[
     "vertex 10814 (row51/col56) <-> vertex 6349 (row53/col7); real " ++
     "27.96cm — PR #5"⟩,
   ⟨"head_l", "cm", .axisExtent, true,
-    "axis extent, HeadEnd bone z - Jaw bone z (crown to chin); real " ++
-    "14.80cm — PR #5"⟩,
-  ⟨"armscye_depth", "cm", .surfaceDistance, true,
-    "surface path, LeftShoulder bone vertex 2265 (row31/col50) -> bust " ++
-    "ring's left-most (underarm-side) vertex 10655 (row55/col55); real " ++
-    "26.60cm — PR #5"⟩,
-  ⟨"bust_line", "cm", .heightMarker, true,
-    "height at which the bust circumference loop is sampled"⟩,
+    "CORRECTED per GarmentCodeData App. 0.B: 'distance between the NECK " ++
+    "landmark and the highest point of the head', not jaw-to-crown. Axis " ++
+    "extent, HeadEnd bone z - Neck1/Neck2 midpoint z; real 23.37cm (prior " ++
+    "jaw-based 14.80cm used the wrong lower landmark) — PR #5"⟩,
+  ⟨"armscye_depth", "cm", .euclideanDistance, true,
+    "CORRECTED per GarmentCodeData App. 0.B (grouped with shoulder_w/" ++
+    "bust_points/bum_points as straight-line landmark distances). " ++
+    "LeftShoulder bone vertex (2265) -> bust ring's left-most (underarm-" ++
+    "side) vertex (10655); real EUCLIDEAN 21.21cm (prior 26.60cm was the " ++
+    "geodesic, wrong operation) — PR #5"⟩,
+  ⟨"bust_line", "cm", .heightMarker, false,
+    "GarmentCodeData App. 0.B reveals this is NOT a sampling-height " ++
+    "scalar but a real frontal-torso polyline LENGTH (parasagittal-plane " ++
+    "cut from the bust circumference's intersection plane up to the " ++
+    "shoulder landmarks' frontal plane) — this package's heightMarker " ++
+    "classification and the schema's plane-cut torso_heights usage is " ++
+    "the SIMPLER GarmentCode (not GarmentCodeData) reading; marked " ++
+    "unsettled again pending a real parasagittal-plane-cut implementation"⟩,
   ⟨"waist_line", "cm", .heightMarker, true,
     "height at which the waist circumference loop is sampled"⟩,
   ⟨"hips_line", "cm", .heightMarker, true,
     "height at which the hips circumference loop is sampled"⟩,
-  ⟨"vert_bust_line", "cm", .heightMarker, true,
-    "axis extent, Neck1/Neck2 midpoint z - bust ring z; real 21.37cm — PR #5"⟩,
-  ⟨"waist_over_bust_line", "cm", .heightMarker, true,
-    "axis extent, bust ring z - waist ring z; real 10.93cm — PR #5"⟩,
-  ⟨"bust_points", "cm", .surfaceDistance, true,
-    "surface path between the bust ring's left-most vertex 10655 " ++
-    "(row55/col55) and right-most vertex 6190 (row52/col3); real " ++
-    "32.77cm — the geometric stand-in for the two named bust-apex " ++
-    "points (GarmentCode issue #6 confirms these are points, not a " ++
-    "length in general, but this schema's scalar field reads as an " ++
-    "inter-point distance) — PR #5"⟩,
-  ⟨"bum_points", "cm", .surfaceDistance, true,
-    "surface path between the hips ring's left-most vertex 16772 " ++
-    "(row46/col54) and right-most vertex 14510 (row51/col12); real " ++
-    "39.90cm — same caveat as bust_points — PR #5"⟩,
-  ⟨"shoulder_incl", "deg", .angle, true, "shoulder slope angle"⟩,
-  ⟨"hip_inclination", "deg", .angle, true, "hip tilt angle"⟩,
-  ⟨"arm_pose_angle", "deg", .angle, true, "rest-pose arm abduction angle"⟩,
+  ⟨"vert_bust_line", "cm", .axisExtent, true,
+    "per GarmentCodeData App. 0.B: 'distances between two landmarks ALONG " ++
+    "THE UPWARD AXIS' (grouped with crotch_hip_diff and hip_line) — a " ++
+    "true axis extent, confirming this package's method. Neck1/Neck2 " ++
+    "midpoint z - bust ring z; real 21.37cm — PR #5"⟩,
+  ⟨"waist_over_bust_line", "cm", .heightMarker, false,
+    "GarmentCodeData App. 0.B: NOT an axis extent — 'a parasagittal " ++
+    "plane with least-squares distance to a predefined edge loop', cut " ++
+    "polyline between the waist circumference's plane (bottom) and the " ++
+    "frontal plane nearest the shoulder landmarks (top). This package's " ++
+    "prior axisExtent value (10.93cm, a straight z-difference) is a " ++
+    "DOCUMENTED SIMPLIFICATION, not the published method — marked " ++
+    "unsettled again pending a real parasagittal-plane-cut implementation"⟩,
+  ⟨"bust_points", "cm", .euclideanDistance, true,
+    "CORRECTED per GarmentCodeData App. 0.B: straight 3D distance between " ++
+    "the bust_left/bust_right landmarks (the bust ring's left-most " ++
+    "vertex 10655 and right-most vertex 6190), not a surface path; real " ++
+    "EUCLIDEAN 24.94cm (prior 32.77cm was the geodesic) — PR #5"⟩,
+  ⟨"bum_points", "cm", .euclideanDistance, true,
+    "CORRECTED per GarmentCodeData App. 0.B: straight 3D distance between " ++
+    "the bum_left/bum_right landmarks (hips ring's left-most vertex " ++
+    "16772, right-most vertex 14510); real EUCLIDEAN 31.11cm (prior " ++
+    "39.90cm was the geodesic) — PR #5"⟩,
+  ⟨"shoulder_incl", "deg", .angle, true,
+    "REAL formula from the published reference implementation " ++
+    "(github.com/mbotsch/GarmentMeasurements measure_body.cpp's " ++
+    "angle_plane_vec: v=normalize(shoulder-neck), theta=acos(dot(planeN,v))-pi/2, " ++
+    "result=-theta in degrees), plane normal = the horizontal (-Y in " ++
+    "their Y-up convention = -Z here). Real 29.06deg — PR #6"⟩,
+  ⟨"hip_inclination", "deg", .angle, true,
+    "REAL formula from GarmentMeasurements (angle_plane_vec, landmarks " ++
+    "hips_side_right/waist_side_right, plane normal = the median/" ++
+    "sagittal plane, X axis in their convention = X here). Real " ++
+    "-13.07deg — PR #6"⟩,
+  ⟨"arm_pose_angle", "deg", .angle, true,
+    "REAL formula from GarmentMeasurements (angle_plane_vec, landmarks " ++
+    "shoulder_right/wrist_right, plane normal = the horizontal, same " ++
+    "-Y/-Z convention as shoulder_incl). Real 43.90deg — PR #6"⟩,
   ⟨"crotch_hip_diff", "cm", .difference, true,
     "derived: crotch height vs. hip line height difference"⟩
 ]

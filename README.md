@@ -8,16 +8,16 @@ A flat plane cut through a body mesh is not what a tailor's tape reads, and most
 
 A real rendered wireframe of the ANNY-SOMA-X mesh.
 
-Green = 22 of 26 fields with real vertex/geodesic/axis-extent data, every landmark addressed through the real ChArUco suit board (Godot `lightmap_unwrap`, the same toolchain the physical mocap suit uses), not a raw mesh vertex id.
+Green = 22 of 26 fields with real vertex/geodesic/axis-extent data, every landmark addressed through the real ChArUco suit board (Godot `lightmap_unwrap`, the same toolchain the physical mocap suit uses), not a raw mesh vertex id. Values re-derived against the actual published reference implementation ([`mbotsch/GarmentMeasurements`](https://github.com/mbotsch/GarmentMeasurements), the real C++ source behind [GarmentCodeData](https://arxiv.org/abs/2405.17609v3)), not just the paper's prose.
 
-Red = the 4 angle/derived fields with no vertex-level pick yet.
+Red = 2 of 26 fields (`bust_line`, `waist_over_bust_line`) correctly reverted to unsettled after that reading showed this package's method was a simplification, not the published one.
 
 ```sh
 cd core/geodesic/lean && lake build && lake exe geodesic_test
 cd core/measure-schema/lean && lake build && lake exe measure_schema_report
 ```
 
-Run that to see today's 26 of 26 settled fields, backed by real measured numbers, not placeholders.
+Run that to see today's 24 of 26 settled fields, backed by real measured numbers against the real published algorithm, not placeholders.
 
 The sections below hold what is ported, what is not yet, why open paths and closed loops can never share one straightening step, and the sibling repos to clone: `docs/STATUS.md`.
 
