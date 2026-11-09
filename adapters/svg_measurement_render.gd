@@ -29,11 +29,28 @@ extends SceneTree
 # anchor-to-pixel distances non-uniform across the frame.
 #
 # Measurement curves (circumference loops, geodesic/Euclidean lines)
-# are drawn as real 3D line meshes (depth-tested against the body, so
-# a curve on the far side of the body is correctly hidden) and get
-# baked into the same PNG as the body -- not drawn as flat SVG paths
-# anymore, since that was the exact class of "ignores real occlusion"
-# bug this whole change fixes.
+# are REAL triangulated ribbon meshes, not flat lines: Godot's
+# PRIMITIVE_LINE_STRIP renders at a fixed ~1px regardless of material
+# width, invisible once scaled into the composite. iFire 2026-11-08:
+# "wait a second isn't this merely curvenet + slughorn. like pen
+# meshing + sliced to 2d?" -- a stroked ribbon around a curve is an
+# annulus in the curve's own local 2D plane (outer offset = boundary,
+# inner offset = hole), which is exactly curvenet.elf's
+# cdt2d_triangulate (Constrained Delaunay with hole removal,
+# GEO::CDT2d, the same triangulator mesh_build already trusts) --
+# "sliced to 2D" is the plane projection, curvenet does the real
+# triangulation. See _ribbon_mesh_curvenet. Depth-tested against the
+# body (a curve on the far side is correctly hidden) and baked into
+# the same PNG as the body.
+#
+# RUNTIME DEPENDENCY (not vendored into this repo): curvenet.elf +
+# addons/godot_sandbox/, copied straight from meshing-pen's
+# 1-transport/meshing-pen (not rebuilt -- real, already-tested guest).
+# Both are present in the Godot project this script actually runs
+# from (currently a scratch project outside this repo); if curvenet.elf
+# is missing or the Sandbox class isn't registered, ribbons are
+# silently skipped (see _ribbon_mesh_curvenet's `sb == null` guard) --
+# everything else (body render, labels, leaders) still works.
 #
 # Camera distribution: the REAL sphere_hammersley_sequence
 # (TencentARC/Pixal3D @ cdbb2bb), ported exactly from this repo's own
@@ -101,6 +118,36 @@ func _init() -> void:
 		printerr("rendering/oit/enabled is not set -- this is NOT the OIT build. Refusing to fake it.")
 		quit(1)
 		return
+
+	# iFire 2026-11-08: "you can reuse our slug code" -> "wait a second
+	# isn't this merely curvenet + slughorn" -- curvenet.elf (already
+	# built, already a godot-sandbox guest, vendored straight from
+	# meshing-pen, not rebuilt) already has a REAL, tested Constrained
+	# Delaunay triangulator with hole removal (cdt2d_triangulate,
+	# GEO::CDT2d). A stroked ribbon around a curve is exactly an
+	# annulus in the curve's own local 2D plane: the outer offset
+	# curve is the boundary, the inner offset curve is the hole. This
+	# replaces the earlier hand-rolled billboard quad-strip (no real
+	# triangulation, no join handling) with curvenet's own tested
+	# geometry code -- the same tool the garment-fitting pipeline
+	# already trusts for mesh_build's triangulation.
+	var curvenet_sb = null
+	if not ClassDB.class_exists("Sandbox"):
+		printerr("Sandbox class not registered -- godot_sandbox addon not loaded; ribbons will be skipped")
+	else:
+		curvenet_sb = ClassDB.instantiate("Sandbox")
+		curvenet_sb.memory_max = 256
+		curvenet_sb.references_max = 4096
+		curvenet_sb.execution_timeout = 1 << 20
+		curvenet_sb.allocations_max = 1000000
+		var cn_prog = load("res://curvenet.elf")
+		if cn_prog == null:
+			printerr("curvenet.elf did not load -- ribbons will be skipped")
+			curvenet_sb = null
+		else:
+			curvenet_sb.program = cn_prog
+			root.add_child(curvenet_sb)
+			await process_frame
 
 	var obj_bytes := FileAccess.get_file_as_string(OBJ_PATH)
 	if obj_bytes.is_empty():
@@ -309,7 +356,7 @@ func _init() -> void:
 	var panels: Array = []
 	for i in NUM_VIEWS:
 		var p = await _render_view(view_dirs[i], i, array_mesh, body_center, zmin, zmax, radius, env,
-			per_view_curves[i], per_view_fixed[i], per_view_axis_ticks[i])
+			per_view_curves[i], per_view_fixed[i], per_view_axis_ticks[i], curvenet_sb)
 		panels.append(p)
 
 	var svg := _compose_tiled_svg(panels)
@@ -328,37 +375,112 @@ func _resolve_z_ref(name: String, torso: Dictionary, head_top_z: float) -> float
 	return float(torso[name])
 
 
-func _line_mesh(points: PackedVector3Array, color: Color, closed: bool, eye_dir: Vector3) -> MeshInstance3D:
-	# Godot's PRIMITIVE_LINE_STRIP renders at a fixed ~1px regardless
-	# of any material "width" setting on most backends (Metal
-	# included) -- the curves were real and correctly depth-tested but
-	# too thin to read once baked into the panel PNG and scaled into
-	# the composite. Build a real camera-facing ribbon (billboarded
-	# quad strip, perpendicular to both the segment tangent and the
-	# view direction) instead of a 1px line primitive, so the
-	# "measurement tape" curves are an actual visible width on the
-	# body regardless of viewing angle.
-	var pts := points
-	if closed and points.size() > 1:
-		var closed_pts := PackedVector3Array(points)
-		closed_pts.append(points[0])
-		pts = closed_pts
-	var half_width := 0.006  # world units; ~1.2cm-scale ribbon, reads clearly at this render size
+# Real tube/ribbon geometry around a 3D curve via curvenet.elf's
+# cdt2d_triangulate (Constrained Delaunay with hole removal, GEO::CDT2d
+# -- the same triangulator mesh_build already trusts). A stroked
+# ribbon is exactly an annulus in the curve's own local 2D plane: the
+# outer offset curve is the boundary, the inner offset curve is the
+# hole (closed curves); an open curve is one simple strip polygon
+# (outer forward + inner reversed, butt-capped ends), no hole needed.
+#
+# 1. Fit a local 2D plane via Newell's method (sum of p_i x p_{i+1}
+#    over the polygon -- the standard best-fit-normal formula for a
+#    roughly-planar polygon; these anatomical curves are all close to
+#    planar). A 2-point open line has no well-defined normal, so it
+#    falls back to an arbitrary perpendicular.
+# 2. Project to 2D, offset ±half_width perpendicular to each vertex's
+#    local tangent, hand the outline to curvenet, read back its real
+#    triangulation, and map the 2D result back to 3D through the same
+#    plane basis.
+func _ribbon_mesh_curvenet(sb, points: PackedVector3Array, color: Color, closed: bool, half_width: float) -> MeshInstance3D:
+	if sb == null or points.size() < 2:
+		return null
+	var n := points.size()
+
+	var normal := Vector3.ZERO
+	for i in n:
+		var a: Vector3 = points[i]
+		var b: Vector3 = points[(i + 1) % n]
+		normal += a.cross(b)
+	if normal.length() < 0.000001:
+		var tangent0 := (points[1] - points[0]).normalized()
+		normal = tangent0.cross(Vector3(0, 0, 1))
+		if normal.length() < 0.001:
+			normal = tangent0.cross(Vector3(1, 0, 0))
+	normal = normal.normalized()
+
+	var origin := Vector3.ZERO
+	for p in points:
+		origin += p
+	origin /= n
+
+	var u := Vector3(1, 0, 0).cross(normal)
+	if u.length() < 0.001:
+		u = Vector3(0, 1, 0).cross(normal)
+	u = u.normalized()
+	var v := normal.cross(u).normalized()
+
+	var p2d: PackedVector2Array = PackedVector2Array()
+	for p in points:
+		var d: Vector3 = p - origin
+		p2d.append(Vector2(d.dot(u), d.dot(v)))
+
+	var outer2d := PackedVector2Array()
+	var inner2d := PackedVector2Array()
+	for i in n:
+		var prev_i := (i - 1 + n) % n if closed else maxi(0, i - 1)
+		var next_i := (i + 1) % n if closed else mini(n - 1, i + 1)
+		var tang: Vector2 = (p2d[next_i] - p2d[prev_i])
+		if tang.length() < 0.000001:
+			tang = Vector2(1, 0)
+		tang = tang.normalized()
+		var perp := Vector2(-tang.y, tang.x) * half_width
+		outer2d.append(p2d[i] + perp)
+		inner2d.append(p2d[i] - perp)
+
+	var boundary_xy := PackedFloat32Array()
+	var holes_xy := PackedFloat32Array()
+	var hole_counts := PackedInt32Array()
+	if closed:
+		for p in outer2d:
+			boundary_xy.append(p.x); boundary_xy.append(p.y)
+		for i in inner2d.size():
+			var p2: Vector2 = inner2d[inner2d.size() - 1 - i]  # reversed: a hole winds opposite the outer boundary
+			holes_xy.append(p2.x); holes_xy.append(p2.y)
+		hole_counts.append(inner2d.size())
+	else:
+		for p in outer2d:
+			boundary_xy.append(p.x); boundary_xy.append(p.y)
+		for i in inner2d.size():
+			var p3: Vector2 = inner2d[inner2d.size() - 1 - i]
+			boundary_xy.append(p3.x); boundary_xy.append(p3.y)
+
+	var interior_xy := PackedFloat32Array()
+	var r = sb.callv("vmcall", ["cdt2d_triangulate", boundary_xy, holes_xy, hole_counts, interior_xy])
+	var r_str := str(r)
+	if not r_str.begins_with("ok"):
+		printerr("cdt2d_triangulate failed: ", r_str)
+		return null
+
+	var out_pts = sb.callv("vmcall", ["cdt2d_points"])
+	var out_faces = sb.callv("vmcall", ["cdt2d_faces"])
+	if typeof(out_pts) != TYPE_PACKED_FLOAT32_ARRAY or typeof(out_faces) != TYPE_PACKED_INT32_ARRAY:
+		printerr("cdt2d_points/cdt2d_faces: unexpected types")
+		return null
+
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	for i in pts.size() - 1:
-		var p0: Vector3 = pts[i]
-		var p1: Vector3 = pts[i + 1]
-		var tangent := (p1 - p0).normalized()
-		if tangent.length() < 0.001:
-			continue
-		var side := tangent.cross(eye_dir).normalized() * half_width
-		var a := p0 + side
-		var b := p0 - side
-		var c := p1 + side
-		var d := p1 - side
-		st.add_vertex(a); st.add_vertex(b); st.add_vertex(c)
-		st.add_vertex(b); st.add_vertex(d); st.add_vertex(c)
+	var pts3: PackedVector3Array = PackedVector3Array()
+	for i in out_pts.size() / 2:
+		var px: float = out_pts[i * 2]
+		var py: float = out_pts[i * 2 + 1]
+		pts3.append(origin + u * px + v * py)
+	for i in out_faces.size() / 3:
+		var i0: int = out_faces[i * 3]
+		var i1: int = out_faces[i * 3 + 1]
+		var i2: int = out_faces[i * 3 + 2]
+		st.add_vertex(pts3[i0]); st.add_vertex(pts3[i1]); st.add_vertex(pts3[i2])
+
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	m.albedo_color = color
@@ -373,7 +495,7 @@ func _line_mesh(points: PackedVector3Array, color: Color, closed: bool, eye_dir:
 
 func _render_view(vd: Dictionary, view_idx: int, array_mesh: ArrayMesh, body_center: Vector3,
 		zmin: float, zmax: float, radius: float, env: Environment,
-		curve_items: Array, fixed_items: Array, axis_ticks_panel: Array) -> Dictionary:
+		curve_items: Array, fixed_items: Array, axis_ticks_panel: Array, curvenet_sb) -> Dictionary:
 	var scene_root := Node3D.new()
 	root.add_child(scene_root)
 	await process_frame
@@ -382,11 +504,16 @@ func _render_view(vd: Dictionary, view_idx: int, array_mesh: ArrayMesh, body_cen
 	body_mi.mesh = array_mesh
 	scene_root.add_child(body_mi)
 
+	var half_width := 0.006  # world units; ~1.2cm-scale ribbon, reads clearly at this render size
 	for item in curve_items:
-		scene_root.add_child(_line_mesh(item["pts3d"], item["color"], item["closed"], vd["eye_dir"]))
+		var mi := _ribbon_mesh_curvenet(curvenet_sb, item["pts3d"], item["color"], item["closed"], half_width)
+		if mi != null:
+			scene_root.add_child(mi)
 	for t in axis_ticks_panel:
 		var pts := PackedVector3Array([t["pos3d_a"], t["pos3d_b"]])
-		scene_root.add_child(_line_mesh(pts, Color(0.0, 0.45, 0.1), false, vd["eye_dir"]))
+		var mi2 := _ribbon_mesh_curvenet(curvenet_sb, pts, Color(0.0, 0.45, 0.1), false, half_width)
+		if mi2 != null:
+			scene_root.add_child(mi2)
 
 	var cam := Camera3D.new()
 	cam.environment = env

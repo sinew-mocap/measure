@@ -3,6 +3,55 @@
 This file is the chronological record of what was tried, whether it held
 up, and what was kept — not a feature list (that's the README/docs/STATUS.md).
 
+## 2026-11-08 — Real curvenet triangulation replaces the billboard ribbon
+
+iFire: "you can reuse our slug code" (re: the prior billboard-ribbon
+fix) -> "wait a second isn't this merely curvenet + slughorn. like pen
+meshing + sliced to 2d?" The billboard ribbon (camera-facing quad
+strip from the previous entry) had no real join handling -- it worked
+visually but wasn't real triangulated geometry.
+
+Investigated the actual slughorn integration options first and found
+the only existing one (`slug.elf`) is a different, specialized, parked
+guest on a different fork, built for baking 2D vector *textures* for
+`entities-sakuragaoka-station`'s VR surfaces (gradients, stamps,
+atlases, 1M+ triangle budgets) -- not a drop-in fit for meshing an
+arbitrary 3D polyline. A proper generic slughorn guest would be real
+new infrastructure (new repo, RFD, Lean4 guest per the operator rule,
+C-ABI bridge to slughorn's C++, RISC-V toolchain) -- flagged this
+honestly rather than improvising it blind.
+
+iFire's actual point: this doesn't need new infrastructure at all.
+`curvenet.elf` already exists, already built, already installed in
+`meshing-pen` (1-transport/meshing-pen/curvenet.elf + its
+addons/godot_sandbox), and already has a real, tested Constrained
+Delaunay triangulator with hole removal (`cdt2d_triangulate`,
+GEO::CDT2d -- the exact sequence `tri2d_cli.cpp` proved correct,
+already the triangulator `mesh_build` trusts for the garment-fitting
+pipeline). A stroked ribbon around a curve IS an annulus in the
+curve's own local 2D plane: the outer offset curve is the boundary,
+the inner offset curve is the hole -- "sliced to 2D" is the plane
+projection (Newell's method for the best-fit normal, since these
+anatomical curves are all close to planar), curvenet does the real
+triangulation, the result maps back to 3D through the same plane
+basis.
+
+Copied `curvenet.elf` + `addons/godot_sandbox/` from meshing-pen into
+the scratch OIT project (not rebuilt, not vendored into this small
+repo -- a 72MB addon). Needed one extra piece beyond copying the
+files: Godot's GDExtension loader needs `.godot/extension_list.cfg` to
+explicitly list the `.gdextension` path, which only exists after a
+project has been opened in the real editor at least once; a
+`--headless --script`-only project never generates it, so the Sandbox
+class silently wasn't registered until that file was added by hand.
+
+Verified: `cdt2d_triangulate` on a plain unit square returns the
+correct 4 points / 2 triangles. On the real curves, every ribbon
+(circumference loops as annuli, open Euclidean lines as simple strips)
+renders as a clean, continuous, properly depth-tested triangulated
+band on the body -- checked closed loops (neck_w, waist, wrist) and
+open lines (shoulder_w, bum_points) at native-resolution zoom.
+
 ## 2026-11-08 — Leaders exit at the image edge; real ribbon curves; open-ring markers
 
 iFire: "I don't like how the lines block the reading of the
