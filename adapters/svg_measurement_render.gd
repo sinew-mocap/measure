@@ -579,8 +579,19 @@ func _panel_svg(view_idx: int, vd: Dictionary, png_b64: String, label_queue: Arr
 
 	var leader_lines: Array = []
 	var label_texts: Array = []
-	_place_column(left_q, left_margin_x, -1.0, img_x0, img_x0 + float(IMG_W), TITLE_H, float(IMG_H) + TITLE_H, leader_lines, label_texts)
-	_place_column(right_q, right_margin_x, 1.0, img_x0, img_x0 + float(IMG_W), TITLE_H, float(IMG_H) + TITLE_H, leader_lines, label_texts)
+	# iFire: "the labels are clipping" -- the top/bottom of the label
+	# column used the panel's own raw TITLE_H/height bounds, so the
+	# first and last labels' text baselines sat exactly ON the panel's
+	# top/bottom border, and a 2-line label's second row (offset below
+	# the baseline) rendered PAST the border into the next panel/page
+	# margin. Inset the usable column range by half a label's own
+	# height on each end, so even the first/last item's full 2-line
+	# text stays inside the panel.
+	var label_half_height := 8.0
+	var col_top := TITLE_H + label_half_height
+	var col_bottom := float(IMG_H) + TITLE_H - label_half_height
+	_place_column(left_q, left_margin_x, -1.0, img_x0, img_x0 + float(IMG_W), col_top, col_bottom, leader_lines, label_texts)
+	_place_column(right_q, right_margin_x, 1.0, img_x0, img_x0 + float(IMG_W), col_top, col_bottom, leader_lines, label_texts)
 
 	var parts: Array = []
 	parts.append('<rect width="100%%" height="100%%" fill="white"/>'.replace("%%", "%"))
