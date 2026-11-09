@@ -3,6 +3,50 @@
 This file is the chronological record of what was tried, whether it held
 up, and what was kept — not a feature list (that's the README/docs/STATUS.md).
 
+## 2026-11-08 — Split one cluttered view into 4 real Hammersley orbit panels
+
+iFire: "still looks terrible" (with a screenshot showing real crossings
+-- an X between `armscye_depth`/`bust_line`, a braided tangle on the
+right) -- the single-view GDScript generator's prior "rails near body"
+redesign was a real regression: items whose real anchor.x sat near the
+body centerline (most torso-loop fields) got a "short" first segment
+that was actually almost as long as the whole panel width, defeating
+the design and producing real leader-leader crossings. Reverted the
+rail placement to NEAR THE MARGIN (matching `xray_oit_render.gd`,
+which verified clean), properly bounding the rail-spacing growth this
+time (the real bug found earlier) instead of re-chasing the wrong fix.
+
+iFire: "use multiple hammersly orbit views so that there's less
+clutter". Rather than keep tuning one 26-field view, split across real
+camera angles: ported `anny-render-corpus/render_view.py`'s
+`sphere_hammersley_sequence` (TencentARC/Pixal3D, exact port -- that
+file's own header: "the first pass here put four cameras at 0, 90,
+180 and 270 degrees... that is a made-up rig", the same house rule
+applied here) into GDScript, and generate 4 panels from 4 real samples
+of a 16-sample sequence (indices 4/6/5/7: the smallest-pitch
+combination whose yaws land exactly 90 degrees apart -- i=0's pitch is
+-90, a known degenerate case the house `render-anny-sphere-hammersley`
+skill already documents).
+
+Each labeled field is assigned to whichever panel's camera direction
+most directly faces its real 3D anchor (`dot(eye_dir, anchor -
+body_center)`) -- real visibility, not a name-based "back_width -> back
+view" heuristic. First attempt (pure greedy-best) still piled most
+fields onto one panel: GarmentCode's own field set is mostly
+front-torso landmarks by nature, so a pure best-match assignment always
+favors whichever one view faces the front. Fixed with capacity-balanced
+greedy assignment: items are ranked by their OWN top-choice confidence
+(most unambiguous first) and each takes its best-ranked view that still
+has room under a per-panel cap, falling back to the next-best view
+otherwise -- the 26 fields now spread ~6-7 per panel instead of ~20 on
+one. The 11 fields with no real 3D anchor (angle markers, axis ticks,
+2 unsettled fields -- `layout_hints.json` only gives a 2D placement)
+get a pseudo-3D position at y=0 and distribute round-robin across
+panels, reprojected through whichever camera they land on.
+
+Verified clean per-panel at native resolution: zero overlapping leader
+lines or label text in any of the 4 views.
+
 ## 2026-11-08 — SVG generator moved from Python/matplotlib to GDScript
 
 iFire: "the svg generator needs to be godot". The shipped SVG's
