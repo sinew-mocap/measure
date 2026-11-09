@@ -71,10 +71,10 @@ const HAMMERSLEY_N := 16
 const VIEW_INDICES := [4, 6, 5, 7]
 const NUM_VIEWS := 4
 const PRIMES0 := 2
-const IMG_W := 688
-const IMG_H := 650  # sized so the full 2x2 composite lands on 2560x1440 (QHD), a real standard resolution
-const TEXT_MARGIN := 290.0
-const TITLE_H := 30.0
+const IMG_W := 344
+const IMG_H := 325  # halved from 688x650: full 2x2 composite now lands on ~1280x720 (HD), half the prior QHD target (iFire: "try halfing the expected raster resolution")
+const TEXT_MARGIN := 145.0
+const TITLE_H := 15.0
 
 
 func _load_json(path: String) -> Variant:
@@ -564,8 +564,8 @@ func _panel_svg(view_idx: int, vd: Dictionary, png_b64: String, label_queue: Arr
 	# right column: left-aligned text growing further right) -- not
 	# at the canvas edge itself, which left zero room for the text
 	# and clipped it against the SVG boundary.
-	var left_margin_x := img_x0 - 20.0
-	var right_margin_x := img_x0 + float(IMG_W) + 20.0
+	var left_margin_x := img_x0 - 10.0
+	var right_margin_x := img_x0 + float(IMG_W) + 10.0
 
 	var left_q: Array = []
 	var right_q: Array = []
@@ -585,11 +585,11 @@ func _panel_svg(view_idx: int, vd: Dictionary, png_b64: String, label_queue: Arr
 	var parts: Array = []
 	parts.append('<rect width="100%%" height="100%%" fill="white"/>'.replace("%%", "%"))
 	var title := "view %d — yaw %.0f° pitch %.0f°" % [view_idx, rad_to_deg(vd["phi"]), rad_to_deg(vd["theta"])]
-	parts.append('<text x="%.1f" y="22" font-family="Helvetica, Arial, sans-serif" font-size="17" font-weight="700" text-anchor="middle" fill="#000">%s</text>' % [w / 2.0, title])
+	parts.append('<text x="%.1f" y="12" font-family="Helvetica, Arial, sans-serif" font-size="9" font-weight="700" text-anchor="middle" fill="#000">%s</text>' % [w / 2.0, title])
 	parts.append('<image x="%.1f" y="%.1f" width="%d" height="%d" href="data:image/png;base64,%s"/>' % [img_x0, TITLE_H, IMG_W, IMG_H, png_b64])
 
 	for ll in leader_lines:
-		parts.append('<path d="%s" fill="none" stroke="#000" stroke-width="1.1"/>' % _pts_to_path(ll["pts"]))
+		parts.append('<path d="%s" fill="none" stroke="#000" stroke-width="0.6"/>' % _pts_to_path(ll["pts"]))
 		var a0: Vector2 = ll["anchor"]
 		# iFire 2026-11-08: "use something instead of a solid circle
 		# for minature figures pointings" -- model-kit/Gunpla manuals
@@ -597,15 +597,15 @@ func _panel_svg(view_idx: int, vd: Dictionary, png_b64: String, label_queue: Arr
 		# a solid filled dot: it reads as "point at this exact spot"
 		# without a heavy blob obscuring the measurement tape curve
 		# directly underneath it.
-		parts.append('<circle cx="%.2f" cy="%.2f" r="4.2" fill="none" stroke="#000" stroke-width="1.3"/>' % [a0.x, a0.y])
+		parts.append('<circle cx="%.2f" cy="%.2f" r="2.1" fill="none" stroke="#000" stroke-width="0.7"/>' % [a0.x, a0.y])
 
 	for lt in label_texts:
 		var lines: Array = str(lt["text"]).split("\n")
 		var col: Color = lt["color"]
 		var hexcol := "#%02x%02x%02x" % [int(col.r * 255), int(col.g * 255), int(col.b * 255)]
 		for li in lines.size():
-			var dy: float = float(li) * 16.0
-			parts.append('<text x="%.2f" y="%.2f" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="700" text-anchor="%s" fill="%s">%s</text>' %
+			var dy: float = float(li) * 8.0
+			parts.append('<text x="%.2f" y="%.2f" font-family="Helvetica, Arial, sans-serif" font-size="7" font-weight="700" text-anchor="%s" fill="%s">%s</text>' %
 				[lt["x"], lt["z"] + dy, lt["anchor"], hexcol, lines[li]])
 
 	return "\n".join(parts)
@@ -622,14 +622,14 @@ func _place_column(items: Array, margin_x: float, rail_sign: float, img_x0: floa
 	# actual text-margin band and let rails/labels overshoot into the
 	# next panel or off the canvas edge -- the same class of bug found
 	# earlier in the pure-vector version, see docs/CHANGELOG.md).
-	# Budget: TEXT_MARGIN total, minus the initial 20px offset, minus
-	# ~150px reserved for the longest label text itself.
-	var max_rail_reach: float = max(20.0, TEXT_MARGIN - 20.0 - 150.0)
+	# Budget: TEXT_MARGIN total, minus the initial 10px offset, minus
+	# ~75px reserved for the longest label text itself (half-scale font).
+	var max_rail_reach: float = max(10.0, TEXT_MARGIN - 10.0 - 75.0)
 	var rail_spacing: float = max_rail_reach / max(1, n - 1) if n > 1 else 0.0
 	for i in n:
 		var item = items[i]
 		var label_y: float = top + step * i if n > 1 else (top + bottom) / 2.0
-		var rail_x: float = margin_x + rail_sign * (20.0 + i * rail_spacing)
+		var rail_x: float = margin_x + rail_sign * (10.0 + i * rail_spacing)
 		var anchor := Vector2(item["x"] + img_x0, item["z"] + TITLE_H)
 		# iFire 2026-11-08: "I don't like how the lines block the
 		# reading of the measurement tapes" -- the leader line used to
@@ -647,8 +647,8 @@ func _place_column(items: Array, margin_x: float, rail_sign: float, img_x0: floa
 			"pts": [exit_point, Vector2(rail_x, exit_point.y), Vector2(rail_x, label_y), Vector2(margin_x, label_y)],
 		})
 		var ha := "end" if rail_sign < 0 else "start"
-		var text_x: float = margin_x - (6.0 if rail_sign < 0 else -6.0)
-		label_texts.append({"text": item["text"], "x": text_x, "z": label_y - 4.0, "color": item["color"], "anchor": ha})
+		var text_x: float = margin_x - (3.0 if rail_sign < 0 else -3.0)
+		label_texts.append({"text": item["text"], "x": text_x, "z": label_y - 2.0, "color": item["color"], "anchor": ha})
 
 
 func _pts_to_path(pts: Array) -> String:
@@ -661,7 +661,7 @@ func _pts_to_path(pts: Array) -> String:
 
 func _compose_tiled_svg(panels: Array) -> String:
 	var cols := 2
-	var gap := 24.0
+	var gap := 12.0
 	var col_w := 0.0
 	for p in panels:
 		col_w = max(col_w, p["w"])
@@ -670,20 +670,20 @@ func _compose_tiled_svg(panels: Array) -> String:
 		row_h = max(row_h, p["h"])
 	var rows := int(ceil(float(panels.size()) / cols))
 	var total_w := col_w * cols + gap * (cols - 1)
-	var total_h := row_h * rows + gap * (rows - 1) + 55.0
+	var total_h := row_h * rows + gap * (rows - 1) + 28.0
 
 	var parts: Array = []
 	parts.append('<?xml version="1.0" encoding="utf-8"?>')
 	parts.append('<svg xmlns="http://www.w3.org/2000/svg" width="%.1f" height="%.1f" viewBox="0 0 %.1f %.1f">' % [total_w, total_h, total_w, total_h])
 	parts.append('<rect width="100%%" height="100%%" fill="white"/>'.replace("%%", "%"))
-	parts.append('<text x="%.1f" y="26" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="700" text-anchor="middle" fill="#000">ANNY-SOMA-X — 26 GarmentCode measurement locations, real order-independent (OIT) render, %d Hammersley-sequence views</text>' % [total_w / 2.0, panels.size()])
-	parts.append('<text x="%.1f" y="44" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="500" text-anchor="middle" fill="#1f2937">green curves = geodesic/circumference fields; amber = Euclidean; red = 2 reverted to unsettled — each field placed on the view that best faces it</text>')
+	parts.append('<text x="%.1f" y="13" font-family="Helvetica, Arial, sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="#000">ANNY-SOMA-X — 26 GarmentCode measurement locations, real order-independent (OIT) render, %d Hammersley-sequence views</text>' % [total_w / 2.0, panels.size()])
+	parts.append('<text x="%.1f" y="22" font-family="Helvetica, Arial, sans-serif" font-size="7" font-weight="500" text-anchor="middle" fill="#1f2937">green curves = geodesic/circumference fields; amber = Euclidean; red = 2 reverted to unsettled — each field placed on the view that best faces it</text>')
 	for i in panels.size():
 		var p = panels[i]
 		var col := i % cols
 		var row := i / cols
 		var tx := col * (col_w + gap)
-		var ty := 55.0 + row * (row_h + gap)
+		var ty := 28.0 + row * (row_h + gap)
 		parts.append('<g transform="translate(%.1f,%.1f)">' % [tx, ty])
 		parts.append(p["body"])
 		parts.append('</g>')
