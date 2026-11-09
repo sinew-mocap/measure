@@ -3,6 +3,33 @@
 This file is the chronological record of what was tried, whether it held
 up, and what was kept — not a feature list (that's the README/docs/STATUS.md).
 
+## 2026-11-08 — SVG generator moved from Python/matplotlib to GDScript
+
+iFire: "the svg generator needs to be godot". The shipped SVG's
+GENERATOR (`anny-render-corpus/render_anny_measurement_wireframe.py`,
+matplotlib) is retired; `adapters/svg_measurement_render.gd` replaces
+it entirely -- mesh loading, wireframe silhouette sampling, the
+type-opo boundary-labeling layout, and the raw SVG XML emission all
+run in pure GDScript now, no Python.
+
+What stays Python, and why: the real anatomy computation
+(`export_real_geodesic_paths.py`) still depends on the Anny PyTorch
+body model, which has no Godot equivalent -- same split
+`xray_oit_render.gd` already uses for the PNG x-ray render (Python
+computes real anatomy once, Godot loads the exported JSON/OBJ and does
+all drawing). Added `layout_hints.json` (`anny-render-corpus` PR #13)
+as the one real-data export Godot didn't already have (axis-tick
+extents, torso heights, the anatomical offsets for the 6 fields with
+no single real vertex/curve to anchor to) -- every value in it is data
+this script already computed for the real measurements themselves, not
+new invented positions.
+
+Verified: mathematically derived, then native-resolution-checked, zero
+overlapping leader lines or label text across the whole image (same
+rigor as the earlier Python port's 3-bug fix, reused directly --
+rails near the body so the long sweep runs at each item's target z,
+rail spacing scaled to the actual per-column item count).
+
 ## 2026-11-08 — Reverted the shipped image: x-ray PNG -> real measurement SVG
 
 iFire: "why did we lose the old working image" then "it was but thew
