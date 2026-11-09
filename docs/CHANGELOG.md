@@ -3,6 +3,26 @@
 This file is the chronological record of what was tried, whether it held
 up, and what was kept — not a feature list (that's the README/docs/STATUS.md).
 
+## 2026-11-08 — Real silhouette edges, not a dump of every triangle edge
+
+iFire: "why is the mesh triangles and not polygonal". The ANNY-SOMA-X
+mesh is genuinely triangle-topology (`model.faces` straight from the
+Anny PyTorch model, 36108 faces all 3-vertex -- confirmed, not
+something this pipeline triangulates), but the wireframe renderer was
+drawing EVERY edge of every stride-sampled triangle, including the
+internal diagonal that splits each roughly-quad patch in two -- that
+diagonal stippling is what read as triangulated static across the
+body surface, not the real mesh resolution.
+
+Replaced stride-sampling with real silhouette-edge extraction: build
+an edge -> adjacent-face map once (shared across all 4 views, topology
+doesn't change), then per view, an edge is a silhouette edge if its
+two adjacent faces disagree on front/back-facing relative to that
+view's camera (`dot(face_normal, eye_dir)` sign flip), or it is a true
+mesh boundary edge with only one adjacent face -- standard technical-
+illustration convention. Front/back-facing is view-dependent, so this
+runs once per panel using that panel's own `eye_dir`.
+
 ## 2026-11-08 — Every real-data label now carries its number + unit
 
 iFire: "your measures seem to lack units with numerics sometimes."

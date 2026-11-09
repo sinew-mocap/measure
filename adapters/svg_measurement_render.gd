@@ -304,23 +304,42 @@ func _init() -> void:
 		if not placed:
 			per_view_curves[ri["ranking"][0]].append(ri["item"])  # all at cap: take the best anyway
 
-	# --- wireframe (every view gets the full silhouette for context) ---
-	var stride := 14
-	var wire_edges: Array = []  # [Vector3, Vector3]
-	var fi := 0
-	while fi < faces.size():
+	# --- true silhouette edges, not a stride-sampled dump of every
+	# triangle's 3 edges. The ANNY-SOMA-X mesh is genuinely
+	# triangle-topology (model.faces straight from the Anny PyTorch
+	# model, 36108 faces, all 3-vertex -- not something this pipeline
+	# triangulates), so drawing every edge of every sampled face drew
+	# the internal diagonal that splits each roughly-quad patch in
+	# two, reading as fine triangulated static across the body surface
+	# (iFire 2026-11-08: "why is the mesh triangles and not polygonal").
+	# A silhouette edge is one whose two adjacent faces disagree on
+	# front/back-facing relative to THIS view's camera (or a true mesh
+	# boundary edge with only one adjacent face) -- standard technical-
+	# illustration convention. This is per-view (front/back-facing
+	# depends on eye_dir), computed once here and reused by all panels
+	# via their own view's dot product.
+	var face_normals: PackedVector3Array = PackedVector3Array()
+	face_normals.resize(faces.size())
+	var edge_faces: Dictionary = {}  # "i_j" (i<j) -> Array[face_idx], up to 2
+	for fi in faces.size():
 		var f = faces[fi]
 		var a: Vector3 = verts[f[0]]
 		var b: Vector3 = verts[f[1]]
 		var c: Vector3 = verts[f[2]]
-		wire_edges.append([a, b])
-		wire_edges.append([b, c])
-		wire_edges.append([c, a])
-		fi += stride
+		face_normals[fi] = (b - a).cross(c - a).normalized()
+		var idx3 := [f[0], f[1], f[2]]
+		for k in 3:
+			var i0: int = idx3[k]
+			var i1: int = idx3[(k + 1) % 3]
+			var key := "%d_%d" % [min(i0, i1), max(i0, i1)]
+			if not edge_faces.has(key):
+				edge_faces[key] = []
+			edge_faces[key].append(fi)
 
-	# --- build each panel ---
+	# --- build each panel (each computes its own silhouette) ---
 	var panels: Array = []  # {svg_body, w, h}
 	for i in NUM_VIEWS:
+		var wire_edges := _silhouette_edges(views[i], verts, faces, face_normals, edge_faces)
 		panels.append(_build_panel(views[i], i, wire_edges, per_view_curves[i],
 			per_view_fixed[i], per_view_axis_ticks[i], zmin, zmax))
 
@@ -338,6 +357,27 @@ func _resolve_z_ref(name: String, torso: Dictionary, head_top_z: float) -> float
 	if name == "waist_bust_mid":
 		return (float(torso["waist"]) + float(torso["bust"])) / 2.0
 	return float(torso[name])
+
+
+func _silhouette_edges(cam: ViewCam, verts: PackedVector3Array, faces: Array,
+		face_normals: PackedVector3Array, edge_faces: Dictionary) -> Array:
+	var edges: Array = []  # [Vector3, Vector3]
+	for key in edge_faces.keys():
+		var fs: Array = edge_faces[key]
+		var is_silhouette := false
+		if fs.size() == 1:
+			is_silhouette = true  # true mesh boundary (open edge)
+		else:
+			var side_a: float = face_normals[fs[0]].dot(cam.eye_dir)
+			var side_b: float = face_normals[fs[1]].dot(cam.eye_dir)
+			is_silhouette = (side_a >= 0.0) != (side_b >= 0.0)  # front/back disagree
+		if not is_silhouette:
+			continue
+		var parts: PackedStringArray = key.split("_")
+		var i0: int = int(parts[0])
+		var i1: int = int(parts[1])
+		edges.append([verts[i0], verts[i1]])
+	return edges
 
 
 # One panel: projects everything into this view's 2D (right, up) plane,
