@@ -669,21 +669,31 @@ func _compose_tiled_svg(panels: Array) -> String:
 	for p in panels:
 		row_h = max(row_h, p["h"])
 	var rows := int(ceil(float(panels.size()) / cols))
-	var total_w := col_w * cols + gap * (cols - 1)
-	var total_h := row_h * rows + gap * (rows - 1) + 14.0
+	# Page padding around the whole composite: the prior version placed
+	# panel (0,0) flush against x=0/y=title_h with no margin, so its
+	# own 0.5px-inset border sat right on the canvas edge and visibly
+	# clipped there (iFire: "the borders need spans add white space" /
+	# "the borders are clipped add white space"). A real page margin on
+	# all four sides fixes that for every panel, not just the corner one.
+	var page_pad := 10.0
+	var header_h := 14.0
+	var grid_w := col_w * cols + gap * (cols - 1)
+	var grid_h := row_h * rows + gap * (rows - 1)
+	var total_w := grid_w + 2.0 * page_pad
+	var total_h := grid_h + header_h + 2.0 * page_pad
 
 	var parts: Array = []
 	parts.append('<?xml version="1.0" encoding="utf-8"?>')
 	parts.append('<svg xmlns="http://www.w3.org/2000/svg" width="%.1f" height="%.1f" viewBox="0 0 %.1f %.1f">' % [total_w, total_h, total_w, total_h])
 	parts.append('<rect width="100%%" height="100%%" fill="white"/>'.replace("%%", "%"))
-	parts.append('<text x="%.1f" y="7" font-family="Helvetica, Arial, sans-serif" font-size="5" font-weight="700" text-anchor="middle" fill="#000">ANNY-SOMA-X — 26 GarmentCode measurement locations, real order-independent (OIT) render, %d Hammersley-sequence views</text>' % [total_w / 2.0, panels.size()])
-	parts.append('<text x="%.1f" y="11" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="500" text-anchor="middle" fill="#1f2937">green curves = geodesic/circumference fields; amber = Euclidean; red = 2 reverted to unsettled — each field placed on the view that best faces it</text>')
+	parts.append('<text x="%.1f" y="%.1f" font-family="Helvetica, Arial, sans-serif" font-size="5" font-weight="700" text-anchor="middle" fill="#000">ANNY-SOMA-X — 26 GarmentCode measurement locations, real order-independent (OIT) render, %d Hammersley-sequence views</text>' % [total_w / 2.0, page_pad + 7.0, panels.size()])
+	parts.append('<text x="%.1f" y="%.1f" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="500" text-anchor="middle" fill="#1f2937">green curves = geodesic/circumference fields; amber = Euclidean; red = 2 reverted to unsettled — each field placed on the view that best faces it</text>' % [total_w / 2.0, page_pad + 11.0])
 	for i in panels.size():
 		var p = panels[i]
 		var col := i % cols
 		var row := i / cols
-		var tx := col * (col_w + gap)
-		var ty := 14.0 + row * (row_h + gap)
+		var tx := page_pad + col * (col_w + gap)
+		var ty := page_pad + header_h + row * (row_h + gap)
 		parts.append('<g transform="translate(%.1f,%.1f)">' % [tx, ty])
 		parts.append(p["body"])
 		# Panel border: drawn AFTER the panel body (whose first element
