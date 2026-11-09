@@ -3,6 +3,39 @@
 This file is the chronological record of what was tried, whether it held
 up, and what was kept — not a feature list (that's the README/docs/STATUS.md).
 
+## 2026-11-08 — Reverted the shipped image: x-ray PNG -> real measurement SVG
+
+iFire: "why did we lose the old working image" then "it was but thew
+one is wong" / "the new one was wrong" -- after the x-ray OIT PNG
+pipeline's long saga of real bugs this session (jagged loops, leader-
+line overlaps, mesh-specific hardcoding), restored the deleted
+`docs/images/anny-soma-x-measurement-locations.svg` (matplotlib vector
+SVG, `datasource-anny-render-corpus`'s `render_anny_measurement_wireframe.py`,
+deleted 2026-11-08 commit 0c6022a per an earlier "only one image"
+instruction) as the shipped README image, replacing the PNG.
+
+The restored SVG had its own real problem -- several hand-tuned
+per-field label offsets left text crowded/overlapping on the body
+(`bust`/`armscye_depth`/`bust_points` near the chest), the exact issue
+the PNG's leader-line system was built to fix. iFire: "apply the same
+validated leader-line callout fix to the SVG". Ported the type-opo
+boundary labeling (Bekos, Kaufmann, Symvonis & Wolff 2007) to the SVG
+generator (`anny-render-corpus` PR #12), finding and fixing 3 more real
+bugs along the way by verifying at native PNG resolution instead of a
+scaled browser screenshot (the lesson from the PNG leader-line work
+re-applied here): a leader's own line touching its own label's text
+start; the long horizontal sweep running at each item's raw anchor
+height instead of its target label height (letting it graze a
+different item's text); and the real one -- unbounded per-item rail
+spacing pushing later rails past the margin for columns with >10
+items, putting their vertical segment literally inside the text
+column. All three fixed; verified clean across the whole image at
+native resolution, not just the previously-flagged region.
+
+`README.md` now points at the SVG (`docs/images/anny-soma-x-measurement-locations.svg`)
+instead of the PNG (`docs/images/anny-soma-x-xray-oit.png`, which stays
+in the repo, just unreferenced).
+
 ## 2026-11-08 — Verified the boundary-labeling fix with a pure-Godot contact sheet
 
 iFire: "they seem to be still overlapping use contact sheet variations
