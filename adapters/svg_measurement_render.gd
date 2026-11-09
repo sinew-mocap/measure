@@ -180,8 +180,17 @@ func _init() -> void:
 			pts3d.append(pv)
 			sum3 += pv
 		var anchor3d: Vector3 = sum3 / pts3d.size()
+		# every circumference/geodesic/Euclidean field has a real cm
+		# value in angle_fields.json -- append it so the label always
+		# carries a number WITH its unit, not just the bare field name
+		# (iFire 2026-11-08: "your measures seem to lack units with
+		# numerics sometimes").
+		var val_cm = angle_values.get(field_name + "_cm")
+		var text: String = field_name
+		if val_cm != null:
+			text = "%s\n%.1fcm" % [field_name, float(val_cm)]
 		curve_items.append({
-			"text": field_name, "anchor3d": anchor3d, "pts3d": pts3d,
+			"text": text, "anchor3d": anchor3d, "pts3d": pts3d,
 			"closed": field_name in LOOP_FIELDS, "dashed": field_name in EUCLID_DASHED_FIELDS,
 			"line_color": Color(0.086, 0.639, 0.290), "text_color": Color(0.086, 0.396, 0.204),
 		})
@@ -230,7 +239,11 @@ func _init() -> void:
 		var zb: float = float(pair[1][2])
 		var x := float(axis_tick_x[name])
 		axis_ticks.append({"name": name, "pos3d_a": Vector3(x, 0.0, za), "pos3d_b": Vector3(x, 0.0, zb)})
-		fixed_items.append({"text": name, "pos3d": Vector3(x, 0.0, (za + zb) / 2.0),
+		var tick_val_cm = angle_values.get(name + "_cm")
+		var tick_text: String = name
+		if tick_val_cm != null:
+			tick_text = "%s\n%.1fcm" % [name, float(tick_val_cm)]
+		fixed_items.append({"text": tick_text, "match_name": name, "pos3d": Vector3(x, 0.0, (za + zb) / 2.0),
 			"line_color": Color(0.086, 0.639, 0.290), "text_color": Color(0.086, 0.396, 0.204)})
 
 	# round-robin distribute the fixed items (and their matching axis
@@ -246,7 +259,7 @@ func _init() -> void:
 	for t in axis_ticks:
 		var owning_view: int = 0
 		for i in fixed_items.size():
-			if fixed_items[i]["text"] == t["name"]:
+			if fixed_items[i].get("match_name", fixed_items[i]["text"]) == t["name"]:
 				owning_view = i % NUM_VIEWS
 				break
 		per_view_axis_ticks[owning_view].append(t)
@@ -397,7 +410,7 @@ func _build_panel(cam: ViewCam, view_idx: int, wire_edges: Array, curve_items: A
 	_place_column(right_q, margin_x_right, 1.0, rail_base, margin_z_top, margin_z_bottom, leader_lines, label_texts)
 
 	var px_per_m := 300.0
-	var pad := 110.0
+	var pad := 130.0  # wider: bold 14px labels need more room than the old thin 9px
 	var data_min_x := margin_x_left - 0.1
 	var data_max_x := margin_x_right + 0.1
 	var data_min_z := margin_z_bottom - 0.1
@@ -456,48 +469,55 @@ func _panel_body(w: float, h: float, view_idx: int, cam: ViewCam, wire_2d: Array
 			s += "Z"
 		return s
 
+	# Japanese model-kit / Gunpla manual style: crisp BLACK callout
+	# lines regardless of what they point to (the convention keeps
+	# leader lines neutral so the eye reads them as pure connective
+	# structure); color stays on the SUBJECT (the real green curves /
+	# red unsettled markers), not the line pointing at it. Bold,
+	# high-contrast black text; small black step-marker dots at every
+	# anchor (the manual's numbered-parts-circle convention, unnumbered
+	# here since names already label each one).
 	var parts: Array = []
 	parts.append('<rect width="100%%" height="100%%" fill="white"/>'.replace("%%", "%"))
 	var title := "view %d — yaw %.0f° pitch %.0f°" % [view_idx, rad_to_deg(cam.phi), rad_to_deg(cam.theta)]
-	parts.append('<text x="%.1f" y="18" font-family="sans-serif" font-size="12" text-anchor="middle" fill="#111">%s</text>' % [w / 2.0, title])
+	parts.append('<text x="%.1f" y="23" font-family="Helvetica, Arial, sans-serif" font-size="17" font-weight="700" text-anchor="middle" fill="#000">%s</text>' % [w / 2.0, title])
 
-	parts.append('<g stroke="#9ca3af" stroke-width="0.4" opacity="0.5">')
+	parts.append('<g stroke="#1f2937" stroke-width="0.8" opacity="0.7">')
 	for seg in wire_2d:
 		parts.append('<line x1="%.2f" y1="%.2f" x2="%.2f" y2="%.2f"/>' %
 			[xp.call(seg[0].x), yp.call(seg[0].y), xp.call(seg[1].x), yp.call(seg[1].y)])
 	parts.append('</g>')
 
 	for c in curves:
-		var dash := ' stroke-dasharray="6,4"' if c["dashed"] else ''
+		var dash := ' stroke-dasharray="9,6"' if c["dashed"] else ''
 		var col: Color = c["color"]
 		var hexcol := "#%02x%02x%02x" % [int(col.r * 255), int(col.g * 255), int(col.b * 255)]
 		var d: String = pts_path.call(c["pts"], c["closed"])
-		parts.append('<path d="%s" fill="none" stroke="%s" stroke-width="1.6"%s/>' % [d, hexcol, dash])
+		parts.append('<path d="%s" fill="none" stroke="#000" stroke-width="3.4" stroke-linejoin="round"%s/>' % [d, dash])
+		parts.append('<path d="%s" fill="none" stroke="%s" stroke-width="2.2"%s/>' % [d, hexcol, dash])
 
 	for t in axis_ticks_out:
 		var x: float = xp.call(t["pt_a"].x)
 		var ya: float = yp.call(t["pt_a"].y)
 		var xb: float = xp.call(t["pt_b"].x)
 		var yb: float = yp.call(t["pt_b"].y)
-		parts.append('<line x1="%.2f" y1="%.2f" x2="%.2f" y2="%.2f" stroke="#166534" stroke-width="1.0"/>' % [x, ya, xb, yb])
-		parts.append('<circle cx="%.2f" cy="%.2f" r="1.6" fill="#166534"/>' % [x, ya])
-		parts.append('<circle cx="%.2f" cy="%.2f" r="1.6" fill="#166534"/>' % [xb, yb])
+		parts.append('<line x1="%.2f" y1="%.2f" x2="%.2f" y2="%.2f" stroke="#000" stroke-width="1.8"/>' % [x, ya, xb, yb])
+		parts.append('<circle cx="%.2f" cy="%.2f" r="3.0" fill="#000"/>' % [x, ya])
+		parts.append('<circle cx="%.2f" cy="%.2f" r="3.0" fill="#000"/>' % [xb, yb])
 
 	for ll in leader_lines:
-		var col2 = ll["color"]
-		var hexcol2 := "#%02x%02x%02x" % [int(col2.r * 255), int(col2.g * 255), int(col2.b * 255)]
 		var d2: String = pts_path.call(ll["pts"], false)
-		parts.append('<path d="%s" fill="none" stroke="%s" stroke-width="0.6" opacity="0.8"/>' % [d2, hexcol2])
+		parts.append('<path d="%s" fill="none" stroke="#000" stroke-width="1.1"/>' % d2)
+		var anchor_pt = ll["pts"][0]
+		parts.append('<circle cx="%.2f" cy="%.2f" r="2.6" fill="#000"/>' % [xp.call(anchor_pt.x), yp.call(anchor_pt.y)])
 
 	for lt in label_texts:
 		var lines: Array = str(lt["text"]).split("\n")
-		var col3 = lt["color"]
-		var hexcol3 := "#%02x%02x%02x" % [int(col3.r * 255), int(col3.g * 255), int(col3.b * 255)]
 		var base_y: float = yp.call(lt["z"])
 		for li in lines.size():
-			var dy: float = -float(lines.size() - 1 - li) * 10.0
-			parts.append('<text x="%.2f" y="%.2f" font-family="sans-serif" font-size="9" text-anchor="%s" fill="%s">%s</text>' %
-				[xp.call(lt["x"]), base_y + dy, lt["anchor"], hexcol3, lines[li]])
+			var dy: float = -float(lines.size() - 1 - li) * 16.0
+			parts.append('<text x="%.2f" y="%.2f" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="700" text-anchor="%s" fill="#000">%s</text>' %
+				[xp.call(lt["x"]), base_y + dy, lt["anchor"], lines[li]])
 
 	return "\n".join(parts)
 
@@ -516,14 +536,14 @@ func _compose_tiled_svg(panels: Array) -> String:
 		row_h = max(row_h, p["h"])
 	var rows := int(ceil(float(panels.size()) / cols))
 	var total_w := col_w * cols + gap * (cols - 1)
-	var total_h := row_h * rows + gap * (rows - 1) + 40.0  # +40 for the overall title
+	var total_h := row_h * rows + gap * (rows - 1) + 55.0  # +55 for the overall title
 
 	var parts: Array = []
 	parts.append('<?xml version="1.0" encoding="utf-8"?>')
 	parts.append('<svg xmlns="http://www.w3.org/2000/svg" width="%.1f" height="%.1f" viewBox="0 0 %.1f %.1f">' % [total_w, total_h, total_w, total_h])
 	parts.append('<rect width="100%%" height="100%%" fill="white"/>'.replace("%%", "%"))
-	parts.append('<text x="%.1f" y="24" font-family="sans-serif" font-size="15" text-anchor="middle" fill="#111">ANNY-SOMA-X — 26 GarmentCode measurement locations, %d real Hammersley-sequence views</text>' % [total_w / 2.0, panels.size()])
-	parts.append('<text x="%.1f" y="38" font-family="sans-serif" font-size="9" text-anchor="middle" fill="#444">green = 24 real fields (dashed = Euclidean, per the real mbotsch/GarmentMeasurements reference); red = 2 reverted to unsettled -- each field placed on the view that best faces it</text>')
+	parts.append('<text x="%.1f" y="26" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="700" text-anchor="middle" fill="#000">ANNY-SOMA-X — 26 GarmentCode measurement locations, %d real Hammersley-sequence views</text>' % [total_w / 2.0, panels.size()])
+	parts.append('<text x="%.1f" y="44" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="500" text-anchor="middle" fill="#1f2937">green = 24 real fields (dashed = Euclidean, per the real mbotsch/GarmentMeasurements reference); red = 2 reverted to unsettled — each field placed on the view that best faces it</text>')
 	for i in panels.size():
 		var p = panels[i]
 		if p["w"] == 0.0:
@@ -531,7 +551,7 @@ func _compose_tiled_svg(panels: Array) -> String:
 		var col := i % cols
 		var row := i / cols
 		var tx := col * (col_w + gap)
-		var ty := 40.0 + row * (row_h + gap)
+		var ty := 55.0 + row * (row_h + gap)
 		parts.append('<g transform="translate(%.1f,%.1f)">' % [tx, ty])
 		parts.append(p["body"])
 		parts.append('</g>')

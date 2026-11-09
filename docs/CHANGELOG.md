@@ -3,6 +3,37 @@
 This file is the chronological record of what was tried, whether it held
 up, and what was kept — not a feature list (that's the README/docs/STATUS.md).
 
+## 2026-11-08 — Every real-data label now carries its number + unit
+
+iFire: "your measures seem to lack units with numerics sometimes."
+Found: the 20 circumference/geodesic/Euclidean curve fields (`waist`,
+`bust`, `shoulder_w`, etc.) rendered as a bare field name with NO
+number at all, even though `angle_fields.json` already had a real cm
+value for every one of them (only the 4 angle/diff markers were
+showing `name\nvalue+unit`). Fixed: every curve-item label now appends
+`\n%.1fcm` from the real `<field>_cm` value in `angle_fields.json`;
+`head_l`/`vert_bust_line` (axis ticks, previously bare too) get the
+same treatment. The 2 fields correctly left bare are `bust_line` /
+`waist_over_bust_line` — they have no real value (that is the whole
+point of marking them unsettled), so showing a number there would be
+the dishonest case, not the fixed one.
+
+## 2026-11-08 — Japanese model-kit manual styling: bold black, high contrast
+
+iFire: "the scaling is too light and hard to read" then "reuse japanese
+minature manuals tyle" (Gunpla/model-kit instruction-sheet
+convention). Restyled `_panel_body` in `adapters/svg_measurement_render.gd`:
+leader lines are now solid black (the manual convention keeps callout
+lines neutral so the eye reads them as pure connective structure, not
+competing with the subject's own color), real-data curves get a black
+outline underneath their green/red fill for contrast against the body
+silhouette, labels are bold black 14px (was thin colored 9px), titles
+bold 17-20px, wireframe darkened from pale gray to charcoal, every
+stroke width roughly doubled. The prior version's font/line weights
+were tuned by eye on a native-resolution screenshot and never checked
+against GitHub's forced scale-down of a ~4800px-wide composite image,
+where a 9px/0.6px-stroke render becomes a couple of pixels.
+
 ## 2026-11-08 — Split one cluttered view into 4 real Hammersley orbit panels
 
 iFire: "still looks terrible" (with a screenshot showing real crossings
