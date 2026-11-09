@@ -328,17 +328,42 @@ func _resolve_z_ref(name: String, torso: Dictionary, head_top_z: float) -> float
 	return float(torso[name])
 
 
-func _line_mesh(points: PackedVector3Array, color: Color, closed: bool) -> MeshInstance3D:
-	var st := SurfaceTool.new()
-	st.begin(Mesh.PRIMITIVE_LINE_STRIP)
-	for p in points:
-		st.add_vertex(p)
+func _line_mesh(points: PackedVector3Array, color: Color, closed: bool, eye_dir: Vector3) -> MeshInstance3D:
+	# Godot's PRIMITIVE_LINE_STRIP renders at a fixed ~1px regardless
+	# of any material "width" setting on most backends (Metal
+	# included) -- the curves were real and correctly depth-tested but
+	# too thin to read once baked into the panel PNG and scaled into
+	# the composite. Build a real camera-facing ribbon (billboarded
+	# quad strip, perpendicular to both the segment tangent and the
+	# view direction) instead of a 1px line primitive, so the
+	# "measurement tape" curves are an actual visible width on the
+	# body regardless of viewing angle.
+	var pts := points
 	if closed and points.size() > 1:
-		st.add_vertex(points[0])
+		var closed_pts := PackedVector3Array(points)
+		closed_pts.append(points[0])
+		pts = closed_pts
+	var half_width := 0.006  # world units; ~1.2cm-scale ribbon, reads clearly at this render size
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for i in pts.size() - 1:
+		var p0: Vector3 = pts[i]
+		var p1: Vector3 = pts[i + 1]
+		var tangent := (p1 - p0).normalized()
+		if tangent.length() < 0.001:
+			continue
+		var side := tangent.cross(eye_dir).normalized() * half_width
+		var a := p0 + side
+		var b := p0 - side
+		var c := p1 + side
+		var d := p1 - side
+		st.add_vertex(a); st.add_vertex(b); st.add_vertex(c)
+		st.add_vertex(b); st.add_vertex(d); st.add_vertex(c)
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	m.albedo_color = color
 	m.no_depth_test = false  # real depth test: a curve behind the body is correctly hidden
+	m.cull_mode = BaseMaterial3D.CULL_DISABLED
 	var mesh := st.commit()
 	mesh.surface_set_material(0, m)
 	var mi := MeshInstance3D.new()
@@ -358,10 +383,10 @@ func _render_view(vd: Dictionary, view_idx: int, array_mesh: ArrayMesh, body_cen
 	scene_root.add_child(body_mi)
 
 	for item in curve_items:
-		scene_root.add_child(_line_mesh(item["pts3d"], item["color"], item["closed"]))
+		scene_root.add_child(_line_mesh(item["pts3d"], item["color"], item["closed"], vd["eye_dir"]))
 	for t in axis_ticks_panel:
 		var pts := PackedVector3Array([t["pos3d_a"], t["pos3d_b"]])
-		scene_root.add_child(_line_mesh(pts, Color(0.0, 0.45, 0.1), false))
+		scene_root.add_child(_line_mesh(pts, Color(0.0, 0.45, 0.1), false, vd["eye_dir"]))
 
 	var cam := Camera3D.new()
 	cam.environment = env
@@ -427,8 +452,8 @@ func _panel_svg(view_idx: int, vd: Dictionary, png_b64: String, label_queue: Arr
 
 	var leader_lines: Array = []
 	var label_texts: Array = []
-	_place_column(left_q, left_margin_x, -1.0, img_x0, TITLE_H, float(IMG_H) + TITLE_H, leader_lines, label_texts)
-	_place_column(right_q, right_margin_x, 1.0, img_x0, TITLE_H, float(IMG_H) + TITLE_H, leader_lines, label_texts)
+	_place_column(left_q, left_margin_x, -1.0, img_x0, img_x0 + float(IMG_W), TITLE_H, float(IMG_H) + TITLE_H, leader_lines, label_texts)
+	_place_column(right_q, right_margin_x, 1.0, img_x0, img_x0 + float(IMG_W), TITLE_H, float(IMG_H) + TITLE_H, leader_lines, label_texts)
 
 	var parts: Array = []
 	parts.append('<rect width="100%%" height="100%%" fill="white"/>'.replace("%%", "%"))
@@ -438,8 +463,14 @@ func _panel_svg(view_idx: int, vd: Dictionary, png_b64: String, label_queue: Arr
 
 	for ll in leader_lines:
 		parts.append('<path d="%s" fill="none" stroke="#000" stroke-width="1.1"/>' % _pts_to_path(ll["pts"]))
-		var a0 = ll["pts"][0]
-		parts.append('<circle cx="%.2f" cy="%.2f" r="2.6" fill="#000"/>' % [a0.x, a0.y])
+		var a0: Vector2 = ll["anchor"]
+		# iFire 2026-11-08: "use something instead of a solid circle
+		# for minature figures pointings" -- model-kit/Gunpla manuals
+		# mark a callout point with a small OPEN ring (a reticle), not
+		# a solid filled dot: it reads as "point at this exact spot"
+		# without a heavy blob obscuring the measurement tape curve
+		# directly underneath it.
+		parts.append('<circle cx="%.2f" cy="%.2f" r="4.2" fill="none" stroke="#000" stroke-width="1.3"/>' % [a0.x, a0.y])
 
 	for lt in label_texts:
 		var lines: Array = str(lt["text"]).split("\n")
@@ -453,7 +484,7 @@ func _panel_svg(view_idx: int, vd: Dictionary, png_b64: String, label_queue: Arr
 	return "\n".join(parts)
 
 
-func _place_column(items: Array, margin_x: float, rail_sign: float, img_x0: float,
+func _place_column(items: Array, margin_x: float, rail_sign: float, img_x0: float, img_x1: float,
 		top: float, bottom: float, leader_lines: Array, label_texts: Array) -> void:
 	var n := items.size()
 	if n == 0:
@@ -473,7 +504,21 @@ func _place_column(items: Array, margin_x: float, rail_sign: float, img_x0: floa
 		var label_y: float = top + step * i if n > 1 else (top + bottom) / 2.0
 		var rail_x: float = margin_x + rail_sign * (20.0 + i * rail_spacing)
 		var anchor := Vector2(item["x"] + img_x0, item["z"] + TITLE_H)
-		leader_lines.append({"pts": [anchor, Vector2(rail_x, anchor.y), Vector2(rail_x, label_y), Vector2(margin_x, label_y)]})
+		# iFire 2026-11-08: "I don't like how the lines block the
+		# reading of the measurement tapes" -- the leader line used to
+		# run straight from the anchor, crossing right over the
+		# rendered body image (and whatever OTHER real curves happen
+		# to sit along that path) on its way to the margin. The drawn
+		# line now starts at the image's own edge instead: it never
+		# enters the image area at all, so it can never cross a
+		# measurement curve. Only a small dot marks the real anchor
+		# position inside the image, where it belongs.
+		var exit_x: float = img_x0 if rail_sign < 0 else img_x1
+		var exit_point := Vector2(exit_x, anchor.y)
+		leader_lines.append({
+			"anchor": anchor,
+			"pts": [exit_point, Vector2(rail_x, exit_point.y), Vector2(rail_x, label_y), Vector2(margin_x, label_y)],
+		})
 		var ha := "end" if rail_sign < 0 else "start"
 		var text_x: float = margin_x - (6.0 if rail_sign < 0 else -6.0)
 		label_texts.append({"text": item["text"], "x": text_x, "z": label_y - 4.0, "color": item["color"], "anchor": ha})

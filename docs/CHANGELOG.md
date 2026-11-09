@@ -3,6 +3,35 @@
 This file is the chronological record of what was tried, whether it held
 up, and what was kept — not a feature list (that's the README/docs/STATUS.md).
 
+## 2026-11-08 — Leaders exit at the image edge; real ribbon curves; open-ring markers
+
+iFire: "I don't like how the lines block the reading of the
+'measurement tapes'". The leader line used to run from the anchor
+straight through the rendered body image on its way to the margin,
+crossing right over other real curves along the way. Fixed: the drawn
+line now starts at the image's own boundary (never enters the image at
+all), with only a small marker at the real anchor position inside it
+-- same idea as routing a callout to the nearest edge, just
+simplified to a straight horizontal exit since anchors/exits share the
+same y.
+
+Investigating this surfaced a second real bug: the measurement curves
+themselves were present in the PNG but essentially invisible once
+scaled into the composite. Godot's `PRIMITIVE_LINE_STRIP` renders at a
+fixed ~1px regardless of any material width setting (confirmed on the
+Metal backend) -- a 1px line in a 688x650 render becomes sub-pixel
+once tiled into a 2560x1439 composite. Replaced with real camera-facing
+ribbon geometry (`PRIMITIVE_TRIANGLES`, billboarded perpendicular to
+both the segment tangent and the view's `eye_dir`) so the "tape"
+curves have an actual visible width at any viewing angle, not a
+rasterizer's thinnest-possible line.
+
+iFire: "use something instead of a solid circle for minature figures
+pointings" -- the solid black anchor dot (sitting right on top of a
+curve) is now an open ring (model-kit/Gunpla manual convention: a
+hollow reticle marks the exact point without a filled blob obscuring
+what's directly underneath it).
+
 ## 2026-11-08 — Real OIT 3D render replaces the CPU silhouette-edge SVG
 
 iFire: "you must use order independent rendering. it is very wrong."
