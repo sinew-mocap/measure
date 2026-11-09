@@ -686,6 +686,16 @@ func _compose_tiled_svg(panels: Array) -> String:
 		var ty := 28.0 + row * (row_h + gap)
 		parts.append('<g transform="translate(%.1f,%.1f)">' % [tx, ty])
 		parts.append(p["body"])
+		# Panel border: drawn AFTER the panel body (whose first element
+		# is its own opaque white background rect, which would
+		# otherwise paint right over a border drawn before it) -- a
+		# full-span rect around each panel's own (w, h) footprint
+		# (title + image + text margins), not just a gap between
+		# panels. iFire: "the borders need spans". A bare gap relies on
+		# background color alone to separate panels; a drawn border
+		# spans the entire panel rectangle so the boundary is explicit
+		# regardless of what's rendered inside.
+		parts.append('<rect x="0.5" y="0.5" width="%.1f" height="%.1f" fill="none" stroke="#000" stroke-width="1.0"/>' % [p["w"] - 1.0, p["h"] - 1.0])
 		parts.append('</g>')
 	parts.append('</svg>')
 	return "\n".join(parts)
