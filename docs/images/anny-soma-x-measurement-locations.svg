@@ -1,120 +1,180 @@
 <?xml version="1.0" encoding="utf-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="662.0" height="382.0" viewBox="0 0 662.0 382.0">
+<svg xmlns="http://www.w3.org/2000/svg" width="1920.0" height="1080.0" viewBox="0 0 1920.0 1080.0">
 <rect width="100%" height="100%" fill="white"/>
-<text x="331.0" y="17.0" font-family="Helvetica, Arial, sans-serif" font-size="5" font-weight="700" text-anchor="middle" fill="#000">ANNY-SOMA-X — 26 GarmentCode measurement locations, real order-independent (OIT) render, 4 Hammersley-sequence views</text>
-<text x="331.0" y="21.0" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="500" text-anchor="middle" fill="#1f2937">green curves = geodesic/circumference fields; amber = Euclidean; red = 2 reverted to unsettled — each field placed on the view that best faces it</text>
-<g transform="translate(10.0,24.0)">
+<text x="960.0" y="42.0" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="700" text-anchor="middle" fill="#000">ANNY-SOMA-X — 26 GarmentCode measurement locations, real order-independent (OIT) render, 2 Hammersley-sequence views (left/right)</text>
+<text x="960.0" y="60.0" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="500" text-anchor="middle" fill="#1f2937">green curves = geodesic/circumference fields; amber = Euclidean; red = 2 reverted to unsettled — each field placed on the view that best faces it</text>
+<g transform="translate(20.0,70.0)">
 <rect width="100%" height="100%" fill="white"/>
-<text x="159.0" y="7" font-family="Helvetica, Arial, sans-serif" font-size="5" font-weight="700" text-anchor="middle" fill="#000">view 0 — yaw 45° pitch 0°</text>
-<image x="73.0" y="8.0" width="172" height="163" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKwAAACjCAIAAACYBWJaAAAAAXNSR0IArs4c6QAABVNJREFUeJztnT+P40QUwF8gS4UuikQKtuGKq7hvsKs7KSVKR38SzX6DleAjHKKlggZBRY/rSLsi32CpKKBgCyJtlG05yRRzN/L5X5yJE8+89/tV1ibxjvx+8954PLZHeZ4L2OaDoRsAw4MEgASABCBIAIIEIEgAggQgSACCBCBIAIIEIEgAggQgSACCBCBIAIIEIEgAggQgSACCBCBIAIIEIEgAIjIeugERsVpmfvtivhiwJSdmxG1o8n74S1iwgXLQZsDOT3VgXYIuMVbvgXUJQIxLoL6Ld8S0BOBAgk7ozhnWJXjcrP2G366i+0TRugRv3vz3sL4XkSfTWe0Xts1mqMH6jOF4fObD3+SBeqxL4AL/sL4fj8+KfymiuxYI5cANBbwBUhgliMh2s54YSA/WJfAUr6B4DybTmfo0IEhQi7VLaqYl8L28FHULJaCIaQlE5Ml0ZvakwMN6gh2zgYwJTHAxX1iIdAtI8JYmD3RfNXAgwW7Ue8CY4C1dIq21apAJRDr3da0pwXQmCA6qspRgNBOsltlqmV1mV8E/77c9w2IxE7gQ3t7dvHj+8pD9qMkH5jKBN+Cbv37pZVcKMCeB5/fFj0M3IRZsSdBXISjtMHVsSSC9GqAGQxKslhkG1GJIgl4Gg1UUVAQrC01H1+fybjD4uFnn9laOtGAoExRPB0Yi28064J6Cbd09KqknAxMSjK7PvQHFEAYkg8l0pm9yTb8ERQM8ucgodIdffPlV9Y9JJwPlEtQa4DhkaaGaCWOHZgncYLCEi/0xRoXpJgO1EhRPB0rkIpfZ1e3dTZf9NH1NUzJQexWxpRBcZlevn75q+uGnH38iIs8++7z201Lsq70/RTl0zhO0GHAxX+Tz+3RT9zFQWA7aDej3f1V3mKJeqjJByzigF1JM9V3QkwlG1+evn75qMeBIIVRghhIJnAEtVwgVhOp4aCgH7QYQ/p0knwkw4HDSzgQ///RdkwGEvzsJS/Dt91+/eP7yWd1HGLAXqUrgDKj+ffDwD96AAJKUoNaAFI9+JCQmQe1iUcJ/IMlI0HTLwCkNWC2znReQUiQNCfyxLhowbAKoDX+iOSmBeYLay7VDHW7XGB0JwBN1JnDHuvRs2cF7mzIDJOZMcLx8GxxFt0pd39POIpVgtcyKDxh2G4Mf+sl0NpnOyASnwB3l0mrgwQ0o4lpYalJULdyLGCVw+NuDYku/7iYk36So2hZGpANDPxiM8BD78qSmLkSaCU7zooHuC8+L3N7d/Pn3H277Yr5QoEJ0meDYry4v7j9sNWLtZYukVVB730ETfUUrwjoVTKTlIH6S7volkACQIBTKgSEsvCHVlgQBhdzCo41sSQC1IAEgQYXHuueT6QYJAAkq5Ic90ypFkACQoEKXc0JNM0ViSgJNs/39YkgCaAIJAAneR1mx7wgSABIAEoAgQRGbAwJBgioGVUACQAJAAhAkADElQfuIz+B40GNIgu5YEwIJAAkACUCQoAlTwwIkACQIQtlyRSRoxE5FQAJAglZakoGmioAEgASABDuxUBGQAJAAkAAECbqgftYICQAJAAlArEnQVN3VV/12bEkQjG5LkACQAJAABAm6o3hYgARgTwLFHToYcxJAFSQAJAAk2Aut4wkk2AM1iwpLIIHa/t0dJAAkAIMSaK3rh2BOgmAU22NLguBAKjZAREZ5ng/dhhPREshD7jVTcHIxHroBpyCsH+vu/UWUS/Dbrz98ePaRdHvboWe1zLab9WQ6227W+/42RdRKsFpmD//+0+WbpXzuDBCR7bvXZjshem9hPBgaE0ATts4OoBYkACQAkf8B7CPO+dXSipAAAAAASUVORK5CYII="/>
-<path d="M73.00,73.20 L63.00,73.20 L63.00,89.50 L68.00,89.50 " fill="none" stroke="#000" stroke-width="0.3"/>
-<circle cx="144.67" cy="73.20" r="1.05" fill="none" stroke="#000" stroke-width="0.35"/>
-<path d="M245.00,50.63 L255.00,50.63 L255.00,16.00 L250.00,16.00 " fill="none" stroke="#000" stroke-width="0.3"/>
-<circle cx="181.11" cy="50.63" r="1.05" fill="none" stroke="#000" stroke-width="0.35"/>
-<path d="M245.00,69.96 L261.20,69.96 L261.20,45.40 L250.00,45.40 " fill="none" stroke="#000" stroke-width="0.3"/>
-<circle cx="190.73" cy="69.96" r="1.05" fill="none" stroke="#000" stroke-width="0.35"/>
-<path d="M245.00,72.77 L267.40,72.77 L267.40,74.80 L250.00,74.80 " fill="none" stroke="#000" stroke-width="0.3"/>
-<circle cx="164.03" cy="72.77" r="1.05" fill="none" stroke="#000" stroke-width="0.35"/>
-<path d="M245.00,73.38 L273.60,73.38 L273.60,104.20 L250.00,104.20 " fill="none" stroke="#000" stroke-width="0.3"/>
-<circle cx="160.05" cy="73.38" r="1.05" fill="none" stroke="#000" stroke-width="0.35"/>
-<path d="M245.00,82.12 L279.80,82.12 L279.80,133.60 L250.00,133.60 " fill="none" stroke="#000" stroke-width="0.3"/>
-<circle cx="160.05" cy="82.12" r="1.05" fill="none" stroke="#000" stroke-width="0.35"/>
-<path d="M245.00,95.29 L286.00,95.29 L286.00,163.00 L250.00,163.00 " fill="none" stroke="#000" stroke-width="0.3"/>
-<circle cx="164.93" cy="95.29" r="1.05" fill="none" stroke="#000" stroke-width="0.35"/>
-<text x="66.50" y="88.50" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="end" fill="#156434">arm_length</text>
-<text x="66.50" y="92.50" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="end" fill="#156434">47.3cm</text>
-<text x="251.50" y="15.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#156434">shoulder_incl</text>
-<text x="251.50" y="19.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#156434">29.1deg</text>
-<text x="251.50" y="44.40" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#7e1d1d">bust_line</text>
-<text x="251.50" y="73.80" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#156434">bust</text>
-<text x="251.50" y="77.80" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#156434">71.3cm</text>
-<text x="251.50" y="103.20" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#156434">back_width</text>
-<text x="251.50" y="107.20" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#156434">30.6cm</text>
-<text x="251.50" y="132.60" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#156434">waist_back_width</text>
-<text x="251.50" y="136.60" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#156434">28.0cm</text>
-<text x="251.50" y="162.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#156434">hips</text>
-<text x="251.50" y="166.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#156434">86.8cm</text>
-<rect x="0.3" y="0.3" width="317.4" height="170.4" fill="none" stroke="#000" stroke-width="0.5"/>
+<text x="465.0" y="26" font-family="Helvetica, Arial, sans-serif" font-size="18" font-weight="700" text-anchor="middle" fill="#000">view 0 — yaw 96° pitch 1°</text>
+<g transform="translate(215.0,40.0)"><path d="M0,0L500,0l0,930L0,930Z" fill="#FEFEFE"/>
+<path d="M238,151l16,0l11,4l8,7l5,10l2,7l0,23l4-1l1,1l0,7l-3,13l-1,2l-5,0l-2,10l-6,10l0,11l4,8l9,8l12,5l13,4l8,2l4,2l0,2l6,1l10,9l7,8l12,19l12,17l12,14l11,13l9,11l14,12l8,7l7,8l18,20l18,22l7,8l14,24l5,13l3,13l0,4l-5-1l-5-4l-5-12l-5,0l-3-9l-3-5l-11-10l-4-1l-4,5l-6,1l-1-3l4-11l0-4l-19-14l-16-11l-16-12l-5-4l-7-8l-8-7l-15-15l-7-8l-9-9l-7-8l-11-12l-5-6l-5-2l-5,18l-1,10l4,2l-4,5l-2,0l-2,22l-1,22l6,1l0,4l-5,0l4,25l8,23l4,18l5,4l2,7l-5,1l6,35l2,15l1,13l0,95l2,26l4,27l5,29l1,12l0,16l-4,52l-1,19l0,26l3,21l4,6l0,2l2,0l0,2l4,2l1,1l0,6l-3,2l-16,2l-15,0l-8-4l-1-2l0-6l2-5l-1-47l-3-28l-4-20l-8-29l-4-27l-3-23l-7-29l-9-53l-7-30l-10-38l-3-9l-5-5l-7,2l-4,20l-14,63l-9,49l-9,31l-4,27l-4,23l-10,36l-4,21l-2,18l0,18l1,16l3,9l7,9l1,2l0,8l-4,2l-17,0l-3,1l-11,0l-10-4l0-8l3-7l2-31l0-27l-3-53l0-27l2-23l4-18l5-21l3-27l0-109l4-40l3-13l-5-1l0-7l7-10l2-1l5-19l8-24l3-19l-6-1l0-1l5-1l0-20l-2-18l-1-3l-6-5l-1-4l1-1l5,0l-5-24l-2-4l-3-1l-9,8l-7,8l-12,13l-7,8l-12,13l-7,8l-9,8l-8,11L92,426l-10,8L69,445l-6,5l5,10l5,8l1,3l-1,1l-7-1l-5-5l-8,1l-5,5l-1,2l-1,16l-1,1l-5,0l-2-7l-2,8l-2,10l-2,2l-5,0l-3,4l-4,0l2-19l5-15l7-15l7-12l6-12l14-20l13-18l9-10l9-8l7-8l14-17l13-16l12-18l10-16l6-8l8-7l2,0l-1-3l21-6l4,0l0-2l16-6l10-7l3-1l2-4l3-8l0-15l-5-11l0-2l-6,0l-4-8l-2-8l1-6l2-1l3,1l0-19l2-10l5-10l7-7l9-4Z" fill="#C4BDB3"/>
+<path d="M179,367l6,0l2,5l6,4l14,3l64,1l19-3l10-4l3-1l2-5l6,1l-3,5l-3,1l-2,22l-1,22l6,1l0,4l-5,0l4,25l8,23l4,18l5,4l2,7l-5,2l-6,1l-8,0l0-2l5-1l1-2l-10-1l-27-1l-62,0l-26,1l-10,2l-1,1l12,2l16,1l33,1l0,1l-42,0l-24-2l-8-2l0-7l7-10l2-1l5-19l8-24l3-19l-6-1l0-1l5-1l0-20l-2-18l-1-3l-6-5l-1-4Z" fill="#C4BDB3"/>
+<path d="M213,472l53,0l22,2l14,4l10,5l10,9l2,1l2,7l-5,2l-6,1l-8,0l0-2l5-1l1-2l-10-1l-27-1l-62,0l-26,1l-10,2l-1,1l12,2l16,1l33,1l0,1l-42,0l-24-2l-8-2l0-7l7-10l9-6l14-4Z" fill="#B79174"/>
+<path d="M211,479l58,0l18,2l10,3l9,6l4,5l-112,0l-21,1l4-7l9-6l11-3Z" fill="#C1BBB0"/>
+<path d="M240,212l10,1l7,0l5,3l4,7l-1,9l-6,10l-7,6l-12,0l-7-8l-4-13l1-6l4-6Z" fill="#B6AD9F"/>
+<path d="M213,472l53,0l22,2l14,4l10,5l10,9l2,1l2,7l-5,2l-6,1l-8,0l0-1l12-2l-3-6l-7-7l-12-6l-12-3l-8-1l-72,0l-16,3l-10,5l-6,7l-2,3l0,5l9,1l25,2l33,1l0,1l-42,0l-24-2l-8-2l0-7l7-10l9-6l14-4Z" fill="#BE6B00"/>
+<path d="M203,277l76,0l16,2l20,5l8,3l-2,3l-11-3l-22-5l-15-1l-63,0l-14,1l-21,5l-5,2l-5,0l-2-3l21-6l9-2Z" fill="#BF6B00"/>
+<path d="M210,280l63,0l15,1l25,6l7,3l-1,3l-11-3l-23-5l-86,0l-21,5l-5,2l-5,0l-2-3l21-6l9-2Z" fill="#B89174"/>
+<path d="M179,367l6,0l2,5l6,4l14,3l64,1l19-3l10-4l3-1l2-5l6,1l-3,5l-6,4l-13,4l-13,2l-66,0l-17-3l-10-4l-4-4l-1-4Z" fill="#BF6B00"/>
+<path d="M185,367l6,0l1,2l7,1l0,1l-5,1l7,3l11,2l63,0l12-2l9-3l0-2l2,0l1-3l6,0l-2,5l-9,5l-14,3l-9,1l-64-1l-14-3l-6-4l-2-2Z" fill="#B49072"/>
+<path d="M460,469l4,2l3,4l5,0l2-4l2,4l0,5l4-4l5,13l2,16l-4,0l-3-3l-4-10l-5,0l-3-9l-3-7l-5-6Z" fill="#B5AB9D"/>
+<path d="M30,475l3,4l0,2l4,1l-6,7l-2,7l-1,0l-2,10l-2,2l-4,0l2-19l4-11l2,3Z" fill="#B6AD9F"/>
+<path d="M198,494l90,0l23,1l1,3l-9-1l-27-1l-62,0l-26,1l-12,2l1-3l4-1Z" fill="#9E9D88"/>
+<path d="M259,195l8,0l3,3l0,7l-4,4l-6,0l-4-3l-1-5l3-5Z" fill="#B6AC9E"/>
+<path d="M234,194l6,2l3,5l-2,6l-3,2l-7-1l-3-3l0-7Z" fill="#B6AD9F"/>
+<path d="M311,895l2,4l5,5l2,1l0-7l4,3l0,6l5-1l1-6l3,3l-1,4l-7,2l-11,0l-2-1Z" fill="#B6AC9E"/>
+<path d="M198,417l23,0l0,1l-19,1l-3,1l29,1l0,1l-12,1l-15,0l-16-2l-2-2Z" fill="#708E66"/>
+<path d="M165,498l5,0l1,2l9,1l25,2l33,1l0,1l-42,0l-24-2l-8-2Z" fill="#2D7D38"/>
+<path d="M270,417l25,0l13,2l0,4l-14,0l-20-1l0-1l19-1l-3-1l-20-1Z" fill="#47864B"/>
+<path d="M468,481l8,6l3,5l2,5l0,5l-2-2l-3-8l-5,0l-3-9Z" fill="#C5BEB4"/>
+<path d="M181,495l33,0l0,1l-26,1l-12,2l1-3Z" fill="#8E967B"/>
+<path d="M270,417l25,0l7,1l0,2l-2,1l-7,0l-3-2l-20-1Z" fill="#8F967C"/>
+<path d="M276,495l35,0l1,3l-9-1l-27-1Z" fill="#8D957A"/>
+<path d="M47,467l2,1l-6,6l1,2l-5,5l-2-6l2-2l0,2l2,0l2-5Z" fill="#B6AC9E"/>
+<path d="M176,902l1,4l-1,2l-15,0l3-2l4-1l2-2l1,2Z" fill="#B5AC9E"/>
+<path d="M234,199l6,2l0,2l-2,1l-6,0l-3-3Z" fill="#C5BEB4"/>
+<path d="M264,199l5,2l0,2l-2,1l-6,0l-2-1l1-3Z" fill="#C5BEB4"/>
+<path d="M165,498l5,0l1,2l9,2l0,1l-8,0l-8-2Z" fill="#007319"/>
+<path d="M323,498l3,0l-1,3l-10,2l-8,0l0-1l12-2Z" fill="#007319"/>
+<path d="M21,498l1,0l0,7l4-1l-2,4l-4,0Z" fill="#C5BEB4"/>
+<path d="M313,499l7,0l-1,2l-5,1l-7,0l0-1Z" fill="#889376"/>
+<path d="M170,498l7,2l3,2l-9-1Z" fill="#899377"/>
+<path d="M447,451l1,0l0,7l-4-2l2-4Z" fill="#B6AD9F"/>
+<path d="M338,901l2,3l-1,4l-5,0l-1-2l4-1Z" fill="#B6AC9E"/>
+<path d="M279,210l1,0l0,8l-3-1l1-6Z" fill="#B7AD9F"/>
+<path d="M57,448l4,2l-2,4l-2,1Z" fill="#B6AD9F"/>
 </g>
-<g transform="translate(334.0,24.0)">
-<rect width="100%" height="100%" fill="white"/>
-<text x="159.0" y="7" font-family="Helvetica, Arial, sans-serif" font-size="5" font-weight="700" text-anchor="middle" fill="#000">view 1 — yaw 135° pitch 10°</text>
-<image x="73.0" y="8.0" width="172" height="163" href="data:image/png;base64,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"/>
-<path d="M73.00,59.28 L63.00,59.28 L63.00,16.00 L68.00,16.00 " fill="none" stroke="#000" stroke-width="0.3"/>
-<circle cx="149.23" cy="59.28" r="1.05" fill="none" stroke="#000" stroke-width="0.35"/>
-<path d="M73.00,82.76 L52.67,82.76 L52.67,65.00 L68.00,65.00 " fill="none" stroke="#000" stroke-width="0.3"/>
-<circle cx="154.32" cy="82.76" r="1.05" fill="none" stroke="#000" stroke-width="0.35"/>
-<path d="M73.00,94.01 L42.33,94.01 L42.33,114.00 L68.00,114.00 " fill="none" stroke="#000" stroke-width="0.3"/>
-<circle cx="124.86" cy="94.01" r="1.05" fill="none" stroke="#000" stroke-width="0.35"/>
-<path d="M73.00,94.50 L32.00,94.50 L32.00,163.00 L68.00,163.00 " fill="none" stroke="#000" stroke-width="0.3"/>
-<circle cx="157.35" cy="94.50" r="1.05" fill="none" stroke="#000" stroke-width="0.35"/>
-<path d="M245.00,65.34 L255.00,65.34 L255.00,16.00 L250.00,16.00 " fill="none" stroke="#000" stroke-width="0.3"/>
-<circle cx="160.39" cy="65.34" r="1.05" fill="none" stroke="#000" stroke-width="0.35"/>
-<path d="M245.00,83.22 L270.50,83.22 L270.50,89.50 L250.00,89.50 " fill="none" stroke="#000" stroke-width="0.3"/>
-<circle cx="178.97" cy="83.22" r="1.05" fill="none" stroke="#000" stroke-width="0.35"/>
-<path d="M245.00,107.13 L286.00,107.13 L286.00,163.00 L250.00,163.00 " fill="none" stroke="#000" stroke-width="0.3"/>
-<circle cx="159.34" cy="107.13" r="1.05" fill="none" stroke="#000" stroke-width="0.35"/>
-<text x="66.50" y="15.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="end" fill="#7e3b00">shoulder_w</text>
-<text x="66.50" y="19.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="end" fill="#7e3b00">33.8cm</text>
-<text x="66.50" y="64.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="end" fill="#156434">waist</text>
-<text x="66.50" y="68.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="end" fill="#156434">63.1cm</text>
-<text x="66.50" y="113.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="end" fill="#156434">hip_inclination</text>
-<text x="66.50" y="117.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="end" fill="#156434">-13.1deg</text>
-<text x="66.50" y="162.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="end" fill="#156434">hip_back_width</text>
-<text x="66.50" y="166.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="end" fill="#156434">37.4cm</text>
-<text x="251.50" y="15.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#7e3b00">armscye_depth</text>
-<text x="251.50" y="19.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#7e3b00">26.6cm</text>
-<text x="251.50" y="88.50" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#7e1d1d">waist_over_bust_line</text>
-<text x="251.50" y="162.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#156434">leg_circ</text>
-<text x="251.50" y="166.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#156434">51.8cm</text>
-<rect x="0.3" y="0.3" width="317.4" height="170.4" fill="none" stroke="#000" stroke-width="0.5"/>
+<path d="M215.00,248.56 L185.00,248.56 L185.00,56.00 L200.00,56.00 " fill="none" stroke="#000" stroke-width="1.0"/>
+<circle cx="193.44" cy="248.56" r="3.6" fill="none" stroke="#000" stroke-width="1.2"/>
+<path d="M215.00,305.12 L179.00,305.12 L179.00,147.80 L200.00,147.80 " fill="none" stroke="#000" stroke-width="1.0"/>
+<circle cx="460.46" cy="305.12" r="3.6" fill="none" stroke="#000" stroke-width="1.2"/>
+<path d="M215.00,322.37 L173.00,322.37 L173.00,239.60 L200.00,239.60 " fill="none" stroke="#000" stroke-width="1.0"/>
+<circle cx="457.28" cy="322.37" r="3.6" fill="none" stroke="#000" stroke-width="1.2"/>
+<path d="M215.00,410.44 L167.00,410.44 L167.00,331.40 L200.00,331.40 " fill="none" stroke="#000" stroke-width="1.0"/>
+<circle cx="460.02" cy="410.44" r="3.6" fill="none" stroke="#000" stroke-width="1.2"/>
+<path d="M215.00,417.01 L161.00,417.01 L161.00,423.20 L200.00,423.20 " fill="none" stroke="#000" stroke-width="1.0"/>
+<circle cx="458.37" cy="417.01" r="3.6" fill="none" stroke="#000" stroke-width="1.2"/>
+<path d="M215.00,459.12 L155.00,459.12 L155.00,515.00 L200.00,515.00 " fill="none" stroke="#000" stroke-width="1.0"/>
+<circle cx="461.74" cy="459.12" r="3.6" fill="none" stroke="#000" stroke-width="1.2"/>
+<path d="M215.00,462.26 L149.00,462.26 L149.00,606.80 L200.00,606.80 " fill="none" stroke="#000" stroke-width="1.0"/>
+<circle cx="461.25" cy="462.26" r="3.6" fill="none" stroke="#000" stroke-width="1.2"/>
+<path d="M215.00,515.52 L143.00,515.52 L143.00,698.60 L200.00,698.60 " fill="none" stroke="#000" stroke-width="1.0"/>
+<circle cx="193.44" cy="515.52" r="3.6" fill="none" stroke="#000" stroke-width="1.2"/>
+<path d="M215.00,522.57 L137.00,522.57 L137.00,790.40 L200.00,790.40 " fill="none" stroke="#000" stroke-width="1.0"/>
+<circle cx="457.46" cy="522.57" r="3.6" fill="none" stroke="#000" stroke-width="1.2"/>
+<path d="M215.00,532.64 L131.00,532.64 L131.00,882.20 L200.00,882.20 " fill="none" stroke="#000" stroke-width="1.0"/>
+<circle cx="463.63" cy="532.64" r="3.6" fill="none" stroke="#000" stroke-width="1.2"/>
+<path d="M215.00,539.02 L125.00,539.02 L125.00,974.00 L200.00,974.00 " fill="none" stroke="#000" stroke-width="1.0"/>
+<circle cx="459.97" cy="539.02" r="3.6" fill="none" stroke="#000" stroke-width="1.2"/>
+<path d="M715.00,284.80 L745.00,284.80 L745.00,56.00 L730.00,56.00 " fill="none" stroke="#000" stroke-width="1.0"/>
+<circle cx="574.78" cy="284.80" r="3.6" fill="none" stroke="#000" stroke-width="1.2"/>
+<path d="M715.00,395.23 L805.00,395.23 L805.00,974.00 L730.00,974.00 " fill="none" stroke="#000" stroke-width="1.0"/>
+<circle cx="652.01" cy="395.23" r="3.6" fill="none" stroke="#000" stroke-width="1.2"/>
+<text x="195.00" y="52.50" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#156434">head_l</text>
+<text x="195.00" y="67.50" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#156434">23.4cm</text>
+<text x="195.00" y="144.30" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#156434">neck_w</text>
+<text x="195.00" y="159.30" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#156434">35.3cm</text>
+<text x="195.00" y="236.10" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#7e3b00">shoulder_w</text>
+<text x="195.00" y="251.10" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#7e3b00">33.8cm</text>
+<text x="195.00" y="327.90" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#156434">bust</text>
+<text x="195.00" y="342.90" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#156434">71.3cm</text>
+<text x="195.00" y="419.70" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#7e3b00">bust_points</text>
+<text x="195.00" y="434.70" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#7e3b00">32.8cm</text>
+<text x="195.00" y="511.50" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#156434">underbust</text>
+<text x="195.00" y="526.50" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#156434">63.0cm</text>
+<text x="195.00" y="603.30" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#156434">waist</text>
+<text x="195.00" y="618.30" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#156434">63.1cm</text>
+<text x="195.00" y="695.10" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#156434">arm_pose_angle</text>
+<text x="195.00" y="710.10" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#156434">43.9deg</text>
+<text x="195.00" y="786.90" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#7e3b00">bum_points</text>
+<text x="195.00" y="801.90" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#7e3b00">39.9cm</text>
+<text x="195.00" y="878.70" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#156434">hip_back_width</text>
+<text x="195.00" y="893.70" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#156434">37.4cm</text>
+<text x="195.00" y="970.50" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#156434">hips</text>
+<text x="195.00" y="985.50" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#156434">86.8cm</text>
+<text x="735.00" y="52.50" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="start" fill="#156434">shoulder_incl</text>
+<text x="735.00" y="67.50" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="start" fill="#156434">29.1deg</text>
+<text x="735.00" y="970.50" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="start" fill="#7e1d1d">bust_line</text>
+<rect x="0.5" y="0.5" width="929.0" height="989.0" fill="none" stroke="#000" stroke-width="1.0"/>
 </g>
-<g transform="translate(10.0,201.0)">
+<g transform="translate(970.0,70.0)">
 <rect width="100%" height="100%" fill="white"/>
-<text x="159.0" y="7" font-family="Helvetica, Arial, sans-serif" font-size="5" font-weight="700" text-anchor="middle" fill="#000">view 2 — yaw 225° pitch 5°</text>
-<image x="73.0" y="8.0" width="172" height="163" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKwAAACjCAIAAACYBWJaAAAAAXNSR0IArs4c6QAABORJREFUeJzt3Ttu20AQgOFRbKeUwIJNjuLOpeHOJ/AhcqCcIJ2QUp0vo0KQyjiBUmxM0Hyslw+JOzP/jxSOEQcL7sdditZjdT6fhXz3ZekB0PKBgEBAICABAQkISEBAAgISEJCAgAQEJCAgAQEJCEhAQAICEhCQgIAEBCQgIAEBCQhIQDBvq+/flh7CmEBAICCR26UHcL1ed9vGd+4fnhYZSW65WAled9u2AOli4TP7COIzjQMxjyBljnFgHAGlBAIR94uBZQTOpzY9ywh4BJiYo/sE9U6H/VlkU5Snw37psSyf5ZUgdOyZ5k1RVl+va187zOlKICJhDXA+/SHjK0HnZQFbQCPjCETk8fmlviM0BJwO+/Dn6uPKKPsIpLb99022803BBQKK5wtB/Yw/v/8R93cUfCGoF/aITVE63wtEZOXhbW3j94+dLwPi4T5BRADTH/K7HSCgyvJ2EN8Fjof94/PLtcaSdWYRJP4emfVATCIY/TQCtyCsXRNMeSKJ2yehmEIwfRZ9OrCDYK75c+jADgIanREE856+3hYDCwi8zdnsWUBwiVzBAgHpRzD9lK2ebnQ87OtPRPOzGKhHML11UZ4+Tn+VEwfWEPRNZ7x1Ua7evx7x49rTjaB9pp4/vqokvb7nF3lYDHQjaDflt8N9esw7UIzA/NxcLcUI2k3/XfCmKDvXA9vgtCK40KzcPzz1STLsQCuCdtXkTV8PvDlQiWDBdyQ06UAlgk+b/lg/oqrvXRH1pg9ByjIwy9OI46uLJQf6EDS66EYQuU4UQw7UI7hC5h2AIKn4Q0ftFEAwIKtLAgiGZfJuEgjG1EdBqQMQjK+TgsZLBBBMzcCSoA9Bhi8b1b4k6EOQ0iJHv4/C9UcyNJsIFkyjA/UI2od48YNeOajeK3XxIcVTiaBxts24+871/4QRrouyegeQnB2oRNBZOMr5HOvgoP6OuvmMrZEdBCLyuttm9aqBxqXiMVcHdhBUhzsrB1LbGjZFmdvYQnYQhJMsLL8ZHuvG7pBVWhE0rg3rf+172viC1YeX4Y6gFUFVY9Od/h9ebpLCUDO846keQVU4uBluBPUyFCBmENQvCGho6hG87rbh9MLB6HQjyHN1VZep9zbuvKY7HfZDP9vEmy3dK0FKIz7dJsNHcRfNPgLh0zA/ywUCPuoqngsEVXwYame+EFBnvhCwL3TmCwF1BgKydbNIZn2I7+eWESsBgYB8IvCzzifmEQE1AgGBgNwi4LKgnlMEVA8E5A8BG0E7dwioHQjIMYL4vuBq1/CLgKp8IXB1fqfnCwF1BgICAblCwAVBX44QUF+mEHh7IelcmUIQib0gkhcEFMkOgshewDIQzw4CGh0IyAoC9oIpGUFAUwIBgYDMI+CCICXjCCgl1wj61glv64drBBQCAZlG4G1VH51lBJQYCAgEZBgBFwTpmUUwOod6QEAgIBCQgIDEKoL0izuHl4HtbCLgpUiDsomABgUCAkErh1sJCDry5sAsgsSJ7PtnrhxYQHChifTjwAKCSDhIycJH4qVMVd9NofjPHg97Efn79vvm7uvj88uo0SnodukBXKkw2W0KnTh+/fyxKUoR2RRl5eDyY1ws+yvB8bCv5jJMbfqt4j46xrKAoF3F4v95/Oft5vYufGdTlOYndWg2EdCgjD86oJRAQPIPIIHK+fyKbWUAAAAASUVORK5CYII="/>
-<path d="M245.00,41.17 L255.00,41.17 L255.00,16.00 L250.00,16.00 " fill="none" stroke="#000" stroke-width="0.3"/>
-<circle cx="184.38" cy="41.17" r="1.05" fill="none" stroke="#000" stroke-width="0.35"/>
-<path d="M245.00,87.81 L286.00,87.81 L286.00,163.00 L250.00,163.00 " fill="none" stroke="#000" stroke-width="0.3"/>
-<circle cx="184.38" cy="87.81" r="1.05" fill="none" stroke="#000" stroke-width="0.35"/>
-<text x="251.50" y="15.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#156434">head_l</text>
-<text x="251.50" y="19.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#156434">23.4cm</text>
-<text x="251.50" y="162.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#156434">arm_pose_angle</text>
-<text x="251.50" y="166.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#156434">43.9deg</text>
-<rect x="0.3" y="0.3" width="317.4" height="170.4" fill="none" stroke="#000" stroke-width="0.5"/>
+<text x="465.0" y="26" font-family="Helvetica, Arial, sans-serif" font-size="18" font-weight="700" text-anchor="middle" fill="#000">view 1 — yaw 276° pitch 2°</text>
+<g transform="translate(215.0,40.0)"><path d="M0,0L500,0l0,930L0,930Z" fill="#FEFEFE"/>
+<path d="M253,148l14,2l8,4l8,8l4,8l2,10l0,20l4-1l2,3l-1,8l-4,11l-1,1l-6,0l-3,10l-2,3l0,15l4,8l9,8l10,5l14,5l11,3l12,8l10,9l14,21l14,18l22,28l12,15l4,6l8,7l7,9l22,33l2,5l6,1l5,6l0,8l-4,6l-7,5l-3,1l-7,0l-6-5l-1-2l-1-9l-12-11l-8-7l-12-11l-7-7l-7-11l-13-12l-9-11l-15-16l-18-20l-5-5l-5-2l-3,4l-5,25l-1,2l2,1l-2,0l-3,28l0,30l4,19l10,30l7,31l2,13l3,34l0,109l3,27l4,17l4,16l2,15l1,13l0,27l-3,53l0,27l2,31l3,9l0,8l-7,3l-11,0l-5,1l-14,0l-4,1l-4-2l0-9l6-9l4-8l1-5l1-17l0-18l-4-29l-5-21l-8-29l-4-26l-3-19l-9-30l-12-64l-9-40l-5-24l-3-6l-4-1l-2,2l-4,0l-4,16l-11,41l-7,33l-7,43l-7,28l-6,45l-6,23l-6,24l-3,24l-1,10l-1,50l2,5l0,6l-5,5l-3,2l-18-2l-3,1l-13-3l-1-1l1-7l7-8l3-6l3-21l0-27l-2-30l-3-40l0-16l2-19l6-33l3-23l1-18l0-96l1-4l-5,0l-1-2l5-1l7-46l8-39l7-20l4-21l1-6l-2-1l2,0l0-27l-2-24l-5-2l4-1l-1-2l-5,2l-2-12l-1-16l1-4l-4,3l-2,0l-2,4l-14,15l-9,10l-5,5l-13,14l-7,8l-13,12l-8,9L92,428L73,442L59,453l-3,1l5,20l-4,2l-5-3l-2-6l-6,3L33,480l-3,14l-1,1l-5,0l-3,7l-3,5l-4,1l0,2l-5,1l1-10l4-14l8-16l10-17l10-12l9-12l24-28l9-10l8-8l8-7l11-11l11-14l9-10l14-19l15-24l9-10l10-7l8-4l19-5l12-5l9-7l4-6l1-3l0-10l-5-7l-3-9l0-4l-5-1l-3-9l-1-12l4-1l1-22l3-10l6-9l8-6l9-3Z" fill="#C4BDB3"/>
+<path d="M253,148l14,2l8,4l8,8l4,8l2,10l0,20l4-1l2,3l-1,8l-4,11l-1,1l-6,0l-3,10l-2,3l0,15l4,8l9,8l10,5l14,5l11,3l12,8l10,9l14,21l14,18l22,28l12,15l4,6l8,7l7,9l22,33l2,5l6,1l5,6l0,8l-4,6l-7,5l-3,1l-7,0l-6-5l-1-2l-1-9l-12-11l-8-7l-12-11l-7-7l-7-11l-13-12l-9-11l-15-16l-18-20l-5-5l-5-2l-3,4l-5,25l-1,2l2,1l-14,5l-20,3l-65,0l-18-3l-10-5l4-1l-1-2l-5,2l-2-12l-1-16l1-4l-4,3l-2,0l-2,4l-14,15l-9,10l-5,5l-13,14l-7,8l-13,12l-8,9L92,428L73,442L59,453l-3,1l5,20l-4,2l-5-3l-2-6l-6,3L33,480l-3,14l-1,1l-5,0l-3,7l-3,5l-4,1l0,2l-5,1l1-10l4-14l8-16l10-17l10-12l9-12l24-28l9-10l8-8l8-7l11-11l11-14l9-10l14-19l15-24l9-10l10-7l8-4l19-5l12-5l9-7l4-6l1-3l0-10l-5-7l-3-9l0-4l-5-1l-3-9l-1-12l4-1l1-22l3-10l6-9l8-6l9-3Z" fill="#C4BDB3"/>
+<path d="M367,325l5,5l12,15l13,17l13,16l4,6l8,7l7,9l22,33l2,5l6,1l5,6l0,8l-4,6l-7,5l-3,1l-7,0l-6-5l-1-2l0-10l5-7l6-4l-13-18l-11-16l-14-20l-8-11l-12-15l-13-17l-9-11Z" fill="#A2A591"/>
+<path d="M462,455l3,4l11,26l2,7l2,20l-5,0l-3-3l-5-1l-2-5l-2-13l-1-2l-3,9l-4-1l-1-1l-1-17l-3-5l-4-3l-6-1l-7,7l-6,1l-1-3l5-9l4-7l2,0l4,5l2,1l7,0l8-4Z" fill="#C4BDB3"/>
+<path d="M245,211l9,1l6-1l6,3l5,7l-1,8l-3,10l-7,7l-7,1l-7-2l-5-4l-6-10l-1-9l6-9Z" fill="#B6AD9F"/>
+<path d="M256,283l2,1l-1,4l-20,10l-30,18l-11,10l-3,5l-1,5l0,13l2,15l-6,3l-2-12l-1-16l3-10l6-8l9-8l13-8l22-13l16-8Z" fill="#BF6B00"/>
+<path d="M257,287l2,0l1,4l-20,10l-22,13l-12,8l-7,8l-1,3l0,16l2,13l-6,2l-3-15l0-13l2-7l9-10l13-9l14-8l16-9Z" fill="#B79174"/>
+<path d="M198,366l5,1l7,3l11,2l61,0l15-3l8-3l12,1l-3,2l-11,4l-20,3l-65,0l-18-3l-10-5l0-1Z" fill="#889376"/>
+<path d="M45,466l0,3L33,480l-4,5l-2,0l-2,4l-3,3l-4,13l-4,2l0-11l2-9l4-10l3,4l1,1l1-7l2-2l1,4l5-1l5-6Z" fill="#B5AB9D"/>
+<path d="M367,325l5,5l12,15l13,17l13,16l7,11l10,16l5,7l-1,2l-11-15l-15-22l-13-16l-10-13l-11-14l-4-6Z" fill="#007319"/>
+<path d="M469,479l1,0l1,5l3-3l3,8l2,13l1,10l-5,0l-2-3l-1-9l-6-12l-2-3l3,0Z" fill="#B7AD9F"/>
+<path d="M451,437l8,2l5,6l0,8l-2,2l-6-9l-2-2l-8,0l-3,3l-3,7l-4,2l0-8l5-7l5-3Z" fill="#007319"/>
+<path d="M190,367l7,0l8,4l10,2l10,1l51,0l18-2l16-5l7,0l-3,2l-11,4l-20,3l-65,0l-18-3l-10-5Z" fill="#007319"/>
+<path d="M334,286l4,1l10,9l14,21l5,7l-1,3l-10-12l-10-13l-11-13Z" fill="#889577"/>
+<path d="M262,194l7,1l3,3l0,7l-3,3l-6,1l-4-2l-2-6l2-5Z" fill="#B6AD9F"/>
+<path d="M235,194l5,0l4,4l1,4l-3,5l-5,2l-5-2l-2-2l0-7Z" fill="#B6AC9E"/>
+<path d="M442,451l1,0l2,7l1,1l7-1l5-5l3-1l1,5l-7,6l-5,2l-7,0l-6-5l-1-4Z" fill="#A19F8A"/>
+<path d="M187,897l1,0l0,5l-5,4l3,2l-2,2l-18-2l-3,1l-3-2l1-6l2,4l4,1l2-6l1,0l0,5l6-1l1-4l3-2l1,4l5-2Z" fill="#B8AFA2"/>
+<path d="M199,552l50,0l6,1l-2,2l-19,2l-7,0l0-1l14-2l-42-1Z" fill="#979A82"/>
+<path d="M180,553l14,0l0,1l-12,1l-2,1l34,1l0,1l-38,0l-10-1l-1-2Z" fill="#3C8242"/>
+<path d="M428,406l5,5l13,19l5,7l-3,1l-12-16l-4-6l-3-7Z" fill="#718D66"/>
+<path d="M242,553l13,0l-2,2l-19,2l-7,0l0-1l14-2Z" fill="#468349"/>
+<path d="M339,289l4,2l8,9l4,6l-1,2l-11-13Z" fill="#C5BEB4"/>
+<path d="M264,199l7,2l-1,2l-8,1l-2-1l1-3Z" fill="#C5BEB4"/>
+<path d="M234,199l6,1l1,3l-7,1l-3-1l0-3Z" fill="#C5BEB4"/>
+<path d="M325,902l12,3l-2,4l-5-1l0-3l-5-2Z" fill="#B9AFA2"/>
+<path d="M155,899l2,1l-1,6l3,1l-9-1l-1-1l0-5l1,4l4,0Z" fill="#B8AFA1"/>
+<path d="M478,502l1,0l1,10l-5,0l-2-3l1-4l1,2l3,1Z" fill="#C5BEB4"/>
+<path d="M447,448l5,1l1,4l-3,2l-3-3Z" fill="#C5BEB4"/>
+<path d="M461,477l2,4l-2,4l-5-5l4-2Z" fill="#B6AC9E"/>
+<path d="M319,901l2,1l-2,6l-6,0l3-2l2,0Z" fill="#B6AC9E"/>
+<path d="M345,902l3,2l3-1l-2,4l-5-1Z" fill="#B6AC9E"/>
+<path d="M220,208l3,3l-1,5l-2,0Z" fill="#B6AC9E"/>
+<path d="M452,470l5,3l2,5l-7-6Z" fill="#B7AD9F"/>
 </g>
-<g transform="translate(334.0,201.0)">
-<rect width="100%" height="100%" fill="white"/>
-<text x="159.0" y="7" font-family="Helvetica, Arial, sans-serif" font-size="5" font-weight="700" text-anchor="middle" fill="#000">view 3 — yaw 315° pitch 14°</text>
-<image x="73.0" y="8.0" width="172" height="163" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKwAAACjCAIAAACYBWJaAAAAAXNSR0IArs4c6QAABiFJREFUeJztnT1vHFUUht8lBhobx5IXyRYSLiIKm/yBRLacEjkV1EZp0rlBMlJ+gpFS0qUBpYaKlejWspX9A5a3iFKsG5AySOPdRUJA0FLc5Hp2vna+dmfuOe9Trb2T8SjnmXPPzD13pjWZTEB0817dB0DqhxIQSkAoAQElIKAEBJSAgBIQUAICSkBACQgoAQElIKAEBJSAgBIQUAICSkBACQgoAQElIKAEBJSAgBIQUAICYKnuA2gWvW7HfLj34KDeI1kkLS5DQyD2UTTYwOEgzYCZ38pAuwRZYizeA+0SECiXQPwpnhHVEhADJciE7JxBCTDyvZnbyL5QVH2zKEv4NcBMAABD3xv5XqwTQwWiqM4EH621gz8mJQbZYwGUS2AIxn7keyEzNKB6OIgdAoK/GfreF18+Wugx1YFqCZJOelsHrOrICqolCBKcS1USe4tqCcRXfBnRXhhGLxAUFoZsKrm5Jfzqqv/7n3+YzxvL6wDufLoNBQmDEgBA63gTwMnW4e7OXuir88uzJ4Pnk6e/1XFcC0K1BMFpofudxwBOtg5D2zwZPAdACQRSbFZQ6rig8eqg8Lyw1AlldRKUDKRID9RJUB55HuiSoKr4CfNAlwQVIskDRRJIClu1aJFgHgaIsUqLBEEa2DHWOt40dy1rQYUE0VN26HuVqCAjGciXIClO2poGUhAugYwzdd5IliDWADMKlEkDobZEAZ5JliCJMgY0sKgsj0wJet1OxlLgetDPu/No65HryUCgBOnPnglNB9/e2s61c5HlpDQJFvD0IXldBXIkSBkCMB25eUTR6RFBiATpMagw6v/89LDaHTYBCRLkKgJKsv99Yjeeu8nAeQnqegShpGTgsAQpRUDlCcDuNuVHOJsMXF2BlBL+BR+JAJyUINaAvOF/ddUHYJccYXrVUUbuPTgIHUyv23FORPckKG9A63jTLDLZ3dm7k7DN+eUZgI3l9VxOOIpLi08qSQCGlHVnUc4vz0yS+PrRt1kOrPAh1bXOyZlMEDWgTNZ9cfDMfr7feZxuw+7OnkkMc41TjSvd3JCgklMtiaAQBrMuMbiBUWRy9F2Ff7c5OCDBXA2IJaqFbBotQbVDAEmiuTeLrAG2KbR2Axy9FzSThkrQ63ZCXVwLM+B60C/QaeI0DR0ORr43AYa+t7rWXsyTBE3gb41f3wIAjC9e/7fysfkqb+OJczRRgl63M3nXw7OAuf/rQd/EfuXuPnAT7/HF6bsPN0L0uvWPSpXTRAlsBTDvMXg6/GGCv7RCXA9wevQwZULZRUWaKIHt45vrf6gxIDb8Uexm44vTvz87Pj1qpXjgHI0rDM3Zv4Dz6fbWdkYDghT4J82ncZnAuXRqpqPMQ84cvcvUuEwwbyqvM378/BsALw6enWwdhu43u0LjMoFDWJ82ltfNDJOjUIJ8jC9OP3z59IOvfrEGvG04uOrD2WdeUoJ8rNzdH36y85fvhZYiOd17oq4mKAkXpGpkOP02HACra21hKxJdai8rz1xvQTp3cWthJihCQ6a2q4ISFMQaIEAFSpAbWyWI6THhJeIUJsCt5LflGYKFoQAVmAmmWF1r5zLAjAWujwiUoBqc9oCXiAVxOuohFGUCAYP3nFAkQYVISgOgBCGERTcjlIBQAkIJCChBEJ0FASgBASUgoAQElICAEkRRWB5SgrcojL1FkQSaw5yOIglIEpSAUAJCCWLRVj1QAkIJCCUgoARJqCoLKAGhBMmkJANh3euUgFCCVJQkA0pAKAGhBDPRcK1ICYojpiygBESZBEm5XUPOT0GXBCQWSjAb8XmCEhBKQCgBASXIiOyyQJ0EssNZDHUSkCiUgFCCzAgeRygBoQSiT/GMUAJCCQglyIXUgUOdBGLagSpEnQRlkCqQLglioyg1tNlRJAGDnYQWCWhACvLfizgz/BlrfsEaSZbg159/QMJLDqu62Ot1OwKuG8VKYE7cN2/+Hfpe9HWWxfYmFbE1gQn20tL7AEa+B2DoezQgFl0vx8xLlvALGA7EZoLyiE8AFrE1QRkyhl9ADjBQgjDGgKHvAVhda4fqSgiKvYU1QQw2E1gD5AU+CCUgLAwJJSAA/gfySEAREA6qvAAAAABJRU5ErkJggg=="/>
-<path d="M245.00,53.85 L255.00,53.85 L255.00,16.00 L250.00,16.00 " fill="none" stroke="#000" stroke-width="0.3"/>
-<circle cx="165.10" cy="53.85" r="1.05" fill="none" stroke="#000" stroke-width="0.35"/>
-<path d="M245.00,71.65 L260.17,71.65 L260.17,40.50 L250.00,40.50 " fill="none" stroke="#000" stroke-width="0.3"/>
-<circle cx="203.96" cy="71.65" r="1.05" fill="none" stroke="#000" stroke-width="0.35"/>
-<path d="M245.00,71.99 L265.33,71.99 L265.33,65.00 L250.00,65.00 " fill="none" stroke="#000" stroke-width="0.3"/>
-<circle cx="168.10" cy="71.99" r="1.05" fill="none" stroke="#000" stroke-width="0.35"/>
-<path d="M245.00,80.55 L270.50,80.55 L270.50,89.50 L250.00,89.50 " fill="none" stroke="#000" stroke-width="0.3"/>
-<circle cx="163.15" cy="80.55" r="1.05" fill="none" stroke="#000" stroke-width="0.35"/>
-<path d="M245.00,89.75 L275.67,89.75 L275.67,114.00 L250.00,114.00 " fill="none" stroke="#000" stroke-width="0.3"/>
-<circle cx="168.77" cy="89.75" r="1.05" fill="none" stroke="#000" stroke-width="0.35"/>
-<path d="M245.00,93.58 L280.83,93.58 L280.83,138.50 L250.00,138.50 " fill="none" stroke="#000" stroke-width="0.3"/>
-<circle cx="182.17" cy="93.58" r="1.05" fill="none" stroke="#000" stroke-width="0.35"/>
-<path d="M245.00,104.05 L286.00,104.05 L286.00,163.00 L250.00,163.00 " fill="none" stroke="#000" stroke-width="0.3"/>
-<circle cx="163.08" cy="104.05" r="1.05" fill="none" stroke="#000" stroke-width="0.35"/>
-<text x="251.50" y="15.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#156434">neck_w</text>
-<text x="251.50" y="19.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#156434">35.3cm</text>
-<text x="251.50" y="39.50" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#156434">vert_bust_line</text>
-<text x="251.50" y="43.50" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#156434">21.4cm</text>
-<text x="251.50" y="64.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#7e3b00">bust_points</text>
-<text x="251.50" y="68.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#7e3b00">32.8cm</text>
-<text x="251.50" y="88.50" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#156434">underbust</text>
-<text x="251.50" y="92.50" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#156434">63.0cm</text>
-<text x="251.50" y="113.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#7e3b00">bum_points</text>
-<text x="251.50" y="117.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#7e3b00">39.9cm</text>
-<text x="251.50" y="137.50" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#156434">wrist</text>
-<text x="251.50" y="141.50" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#156434">13.7cm</text>
-<text x="251.50" y="162.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#156434">crotch_hip_diff</text>
-<text x="251.50" y="166.00" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="start" fill="#156434">2.2cm</text>
-<rect x="0.3" y="0.3" width="317.4" height="170.4" fill="none" stroke="#000" stroke-width="0.5"/>
+<path d="M215.00,357.19 L185.00,357.19 L185.00,56.00 L200.00,56.00 " fill="none" stroke="#000" stroke-width="1.0"/>
+<circle cx="431.74" cy="357.19" r="3.6" fill="none" stroke="#000" stroke-width="1.2"/>
+<path d="M215.00,431.99 L165.00,431.99 L165.00,362.00 L200.00,362.00 " fill="none" stroke="#000" stroke-width="1.0"/>
+<circle cx="249.03" cy="431.99" r="3.6" fill="none" stroke="#000" stroke-width="1.2"/>
+<path d="M215.00,594.99 L145.00,594.99 L145.00,668.00 L200.00,668.00 " fill="none" stroke="#000" stroke-width="1.0"/>
+<circle cx="424.01" cy="594.99" r="3.6" fill="none" stroke="#000" stroke-width="1.2"/>
+<path d="M215.00,605.30 L125.00,605.30 L125.00,974.00 L200.00,974.00 " fill="none" stroke="#000" stroke-width="1.0"/>
+<circle cx="442.11" cy="605.30" r="3.6" fill="none" stroke="#000" stroke-width="1.2"/>
+<path d="M715.00,355.32 L745.00,355.32 L745.00,56.00 L730.00,56.00 " fill="none" stroke="#000" stroke-width="1.0"/>
+<circle cx="770.35" cy="355.32" r="3.6" fill="none" stroke="#000" stroke-width="1.2"/>
+<path d="M715.00,411.49 L757.00,411.49 L757.00,239.60 L730.00,239.60 " fill="none" stroke="#000" stroke-width="1.0"/>
+<circle cx="615.91" cy="411.49" r="3.6" fill="none" stroke="#000" stroke-width="1.2"/>
+<path d="M715.00,412.82 L769.00,412.82 L769.00,423.20 L730.00,423.20 " fill="none" stroke="#000" stroke-width="1.0"/>
+<circle cx="466.06" cy="412.82" r="3.6" fill="none" stroke="#000" stroke-width="1.2"/>
+<path d="M715.00,462.66 L781.00,462.66 L781.00,606.80 L730.00,606.80 " fill="none" stroke="#000" stroke-width="1.0"/>
+<circle cx="466.34" cy="462.66" r="3.6" fill="none" stroke="#000" stroke-width="1.2"/>
+<path d="M715.00,490.62 L793.00,490.62 L793.00,790.40 L730.00,790.40 " fill="none" stroke="#000" stroke-width="1.0"/>
+<circle cx="664.20" cy="490.62" r="3.6" fill="none" stroke="#000" stroke-width="1.2"/>
+<path d="M715.00,547.87 L805.00,547.87 L805.00,974.00 L730.00,974.00 " fill="none" stroke="#000" stroke-width="1.0"/>
+<circle cx="683.46" cy="547.87" r="3.6" fill="none" stroke="#000" stroke-width="1.2"/>
+<text x="195.00" y="52.50" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#7e3b00">armscye_depth</text>
+<text x="195.00" y="67.50" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#7e3b00">26.6cm</text>
+<text x="195.00" y="358.50" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#7e1d1d">waist_over_bust_line</text>
+<text x="195.00" y="664.50" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#156434">leg_circ</text>
+<text x="195.00" y="679.50" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#156434">51.8cm</text>
+<text x="195.00" y="970.50" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#156434">crotch_hip_diff</text>
+<text x="195.00" y="985.50" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="end" fill="#156434">2.2cm</text>
+<text x="735.00" y="52.50" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="start" fill="#156434">vert_bust_line</text>
+<text x="735.00" y="67.50" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="start" fill="#156434">21.4cm</text>
+<text x="735.00" y="236.10" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="start" fill="#156434">arm_length</text>
+<text x="735.00" y="251.10" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="start" fill="#156434">47.3cm</text>
+<text x="735.00" y="419.70" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="start" fill="#156434">back_width</text>
+<text x="735.00" y="434.70" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="start" fill="#156434">30.6cm</text>
+<text x="735.00" y="603.30" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="start" fill="#156434">waist_back_width</text>
+<text x="735.00" y="618.30" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="start" fill="#156434">28.0cm</text>
+<text x="735.00" y="786.90" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="start" fill="#156434">wrist</text>
+<text x="735.00" y="801.90" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="start" fill="#156434">13.7cm</text>
+<text x="735.00" y="970.50" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="start" fill="#156434">hip_inclination</text>
+<text x="735.00" y="985.50" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="start" fill="#156434">-13.1deg</text>
+<rect x="0.5" y="0.5" width="929.0" height="989.0" fill="none" stroke="#000" stroke-width="1.0"/>
 </g>
 </svg>

@@ -3,6 +3,56 @@
 This file is the chronological record of what was tried, whether it held
 up, and what was kept — not a feature list (that's the README/docs/STATUS.md).
 
+## 2026-11-08 — Only 2 views (left/right), real vtracer body tracing, back to 1080p
+
+Three real iFire requests landed together:
+
+**"Can you only use two views. Left and right."** Dropped from 4
+Hammersley-sequence panels to 2: picked the 2 real samples (from a
+128-sample sequence, searched for the closest match) nearest a true
+left/right profile (yaw 90/270 degrees) with the smallest pitch —
+index 34 (yaw 95.6deg, pitch 1.2deg) and index 35 (yaw 275.6deg, pitch
+1.8deg). Still real Hammersley samples, not hand-picked angles, just a
+different smaller subset of the same real sequence.
+
+**"I can't read this go back to 1080p."** After halving the raster
+resolution twice in earlier passes (688x650 → 344x325 → 172x163 per
+panel), the composite had shrunk well below reasonable viewing size.
+Re-derived panel dimensions (IMG_W=500, IMG_H=950, TEXT_MARGIN=215,
+TITLE_H=40) so the 2-panel 1x2 composite lands on exactly 1920x1080,
+and scaled every font-size/stroke-width/leader-offset proportionally
+back up for legibility at that size.
+
+**"please vtracer to convert raster to vector" / "please slughorn to
+convert raster to vector."** The body render was still an embedded
+`<image>` (base64 PNG blob) inside an otherwise-vector SVG — not a
+true vector diagram. Installed the real `vtracer` CLI (prebuilt
+aarch64-apple-darwin binary from `visioncortex/vtracer`'s GitHub
+releases, per the `vtracer-install` skill's own warning: NOT the PyPI
+Python binding, which segfaults on Python 3.14) to `~/.local/bin/vtracer`.
+Each panel's body render is now saved to a real temp PNG, traced via
+`OS.execute(vtracer, ["-i", png, "-o", svg, "--mode", "polygon",
+"--color-precision", "6", "--filter-speckle", "4"])`, and the real
+traced `<path>` elements are parsed back out of vtracer's own output
+and embedded directly (wrapped in the panel's translate group) in
+place of the `<image>` tag — the whole SVG is genuine vector content
+now, confirmed by `grep -c "<image"` returning 0 and `grep -c "<path"`
+returning 95 across both panels. A raw-raster `<image>` fallback stays
+in place (with a loud stderr warning) only if the vtracer binary or
+trace genuinely fails, so a broken trace is never silently swallowed.
+
+Known residual issue, not hidden: on the densest label column
+(13 items stacked on one side of a tall 950px panel), a few leader
+lines' horizontal exit segments visually cross through a NEIGHBORING
+item's label text (confirmed via native-resolution zoom on
+`underbust`/`waist`) — the type-opo construction's per-item rails
+avoid crossing EACH OTHER by construction, but a horizontal run at one
+item's real anchor height can still graze a different item's label
+band when anchor heights cluster closely but label_y assignments
+(evenly spread top-to-bottom) diverge. Not fixed in this pass;
+flagged for a follow-up (e.g. detecting same-height exit/label-y
+collisions and nudging rail z).
+
 ## 2026-11-08 — Real curvenet triangulation replaces the billboard ribbon
 
 iFire: "you can reuse our slug code" (re: the prior billboard-ribbon

@@ -56,9 +56,16 @@ extends SceneTree
 # (TencentARC/Pixal3D @ cdbb2bb), ported exactly from this repo's own
 # render_view.py -- not a hand-rolled orbit. 4 real samples from a
 # 16-sample sequence (indices 4/6/5/7: smallest-pitch combination
-# whose yaws land exactly 90 degrees apart; i=0's pitch is -90, a
-# known degenerate case the house render-anny-sphere-hammersley skill
-# documents).
+# Camera distribution: the REAL sphere_hammersley_sequence
+# (TencentARC/Pixal3D @ cdbb2bb), ported exactly from this repo's own
+# render_view.py -- not a hand-rolled orbit. iFire 2026-11-08: "can
+# you only use two views. left and right." -- picked the 2 real
+# samples (from a 128-sample sequence, searched for the closest match)
+# nearest true left/right profile (yaw 90/270 degrees) with the
+# smallest pitch: index 34 -> yaw 95.6deg pitch 1.2deg (left),
+# index 35 -> yaw 275.6deg pitch 1.8deg (right). Still real Hammersley
+# samples, not hand-picked angles -- just a different, smaller subset
+# of the same real sequence used before.
 
 const CORPUS_ROOT := "/Users/ernest.lee/3-interactor/meshing-pen/6-datasource/anny-render-corpus/"
 const OBJ_PATH := CORPUS_ROOT + "build/anny_export/anny-soma-x.obj"
@@ -67,14 +74,15 @@ const OUT_SVG := EXPORT_DIR + "anny_measurement_wireframe_godot.svg"
 
 const LOOP_FIELDS := ["waist", "hips", "bust", "underbust", "leg_circ", "wrist", "neck_w"]
 const EUCLID_DASHED_FIELDS := ["shoulder_w", "armscye_depth", "bust_points", "bum_points"]
-const HAMMERSLEY_N := 16
-const VIEW_INDICES := [4, 6, 5, 7]
-const NUM_VIEWS := 4
+const HAMMERSLEY_N := 128
+const VIEW_INDICES := [34, 35]
+const NUM_VIEWS := 2
 const PRIMES0 := 2
-const IMG_W := 172
-const IMG_H := 163  # halved again from 344x325: full 2x2 composite now lands on ~640x360 (half of HD) (iFire: "half the raster size again")
-const TEXT_MARGIN := 73.0
-const TITLE_H := 8.0
+const IMG_W := 500
+const IMG_H := 950  # sized (with TEXT_MARGIN/TITLE_H below) so the 2-panel composite lands on exactly 1920x1080 (iFire: "go back to 1080p")
+const TEXT_MARGIN := 215.0
+const TITLE_H := 40.0
+const VTRACER_PATH := "/Users/ernest.lee/.local/bin/vtracer"
 
 
 func _load_json(path: String) -> Variant:
@@ -533,8 +541,37 @@ func _render_view(vd: Dictionary, view_idx: int, array_mesh: ArrayMesh, body_cen
 		await process_frame
 
 	var img := root.get_viewport().get_texture().get_image()
-	var png_bytes: PackedByteArray = img.save_png_to_buffer()
-	var b64 := Marshalls.raw_to_base64(png_bytes)
+	# iFire 2026-11-08: "please vtracer to convert raster to vector" --
+	# the body render is no longer embedded as a <image> (base64 PNG
+	# blob); it is traced into REAL vector <path> elements by the real
+	# vtracer CLI (visioncortex/vtracer, installed binary, not the
+	# PyPI Python binding which segfaults on Python 3.14 -- see the
+	# vtracer-install skill's own warning). Saved to a real temp PNG,
+	# shelled out via OS.execute, result parsed back as vector markup.
+	var png_path := EXPORT_DIR + ("panel_%d.png" % view_idx)
+	var svg_path := EXPORT_DIR + ("panel_%d_traced.svg" % view_idx)
+	img.save_png(png_path)
+	var out: Array = []
+	var exit_code := OS.execute(VTRACER_PATH, [
+		"-i", png_path, "-o", svg_path,
+		"--mode", "polygon", "--color-precision", "6", "--filter-speckle", "4",
+	], out, true)
+	var body_vector := ""
+	if exit_code == 0 and FileAccess.file_exists(svg_path):
+		var traced := FileAccess.get_file_as_string(svg_path)
+		# Keep only the real traced <path> elements -- strip vtracer's
+		# own <?xml?>/<svg>/</svg> wrapper, which this function's
+		# caller re-wraps in its own <g transform> instead.
+		var start := traced.find("<path")
+		var end := traced.rfind("</svg>")
+		if start != -1 and end != -1:
+			body_vector = traced.substr(start, end - start)
+	if body_vector.is_empty():
+		printerr("vtracer trace failed for view ", view_idx, " (exit=", exit_code, ", out=", out,
+			") -- falling back to the raw raster <image> embed for this panel only")
+		var png_bytes: PackedByteArray = img.save_png_to_buffer()
+		var b64 := Marshalls.raw_to_base64(png_bytes)
+		body_vector = '<image x="0" y="0" width="%d" height="%d" href="data:image/png;base64,%s"/>' % [IMG_W, IMG_H, b64]
 
 	# --- pixel-perfect anchors via Godot's OWN camera projection ---
 	var label_queue: Array = []
@@ -548,14 +585,15 @@ func _render_view(vd: Dictionary, view_idx: int, array_mesh: ArrayMesh, body_cen
 	scene_root.queue_free()
 	await process_frame
 
-	var body := _panel_svg(view_idx, vd, b64, label_queue)
+	var body := _panel_svg(view_idx, vd, body_vector, label_queue)
 	return {"body": body, "w": float(IMG_W) + 2.0 * TEXT_MARGIN, "h": float(IMG_H) + TITLE_H}
 
 
 # Type-opo boundary labeling over REAL screen-pixel anchors (from
-# cam.unproject_position -- guaranteed to match the embedded PNG
-# pixel-for-pixel, since both come from the same Godot camera).
-func _panel_svg(view_idx: int, vd: Dictionary, png_b64: String, label_queue: Array) -> String:
+# cam.unproject_position -- guaranteed to match the traced vector
+# body pixel-for-pixel, since the trace is 1:1 on the same raster
+# Godot's own camera produced).
+func _panel_svg(view_idx: int, vd: Dictionary, body_vector: String, label_queue: Array) -> String:
 	var w := float(IMG_W) + 2.0 * TEXT_MARGIN
 	var img_x0 := TEXT_MARGIN
 	# Rails terminate just outside the image edge; labels live in the
@@ -564,8 +602,8 @@ func _panel_svg(view_idx: int, vd: Dictionary, png_b64: String, label_queue: Arr
 	# right column: left-aligned text growing further right) -- not
 	# at the canvas edge itself, which left zero room for the text
 	# and clipped it against the SVG boundary.
-	var left_margin_x := img_x0 - 5.0
-	var right_margin_x := img_x0 + float(IMG_W) + 5.0
+	var left_margin_x := img_x0 - 15.0
+	var right_margin_x := img_x0 + float(IMG_W) + 15.0
 
 	var left_q: Array = []
 	var right_q: Array = []
@@ -587,7 +625,7 @@ func _panel_svg(view_idx: int, vd: Dictionary, png_b64: String, label_queue: Arr
 	# margin. Inset the usable column range by half a label's own
 	# height on each end, so even the first/last item's full 2-line
 	# text stays inside the panel.
-	var label_half_height := 8.0
+	var label_half_height := 16.0
 	var col_top := TITLE_H + label_half_height
 	var col_bottom := float(IMG_H) + TITLE_H - label_half_height
 	_place_column(left_q, left_margin_x, -1.0, img_x0, img_x0 + float(IMG_W), col_top, col_bottom, leader_lines, label_texts)
@@ -596,11 +634,11 @@ func _panel_svg(view_idx: int, vd: Dictionary, png_b64: String, label_queue: Arr
 	var parts: Array = []
 	parts.append('<rect width="100%%" height="100%%" fill="white"/>'.replace("%%", "%"))
 	var title := "view %d — yaw %.0f° pitch %.0f°" % [view_idx, rad_to_deg(vd["phi"]), rad_to_deg(vd["theta"])]
-	parts.append('<text x="%.1f" y="7" font-family="Helvetica, Arial, sans-serif" font-size="5" font-weight="700" text-anchor="middle" fill="#000">%s</text>' % [w / 2.0, title])
-	parts.append('<image x="%.1f" y="%.1f" width="%d" height="%d" href="data:image/png;base64,%s"/>' % [img_x0, TITLE_H, IMG_W, IMG_H, png_b64])
+	parts.append('<text x="%.1f" y="26" font-family="Helvetica, Arial, sans-serif" font-size="18" font-weight="700" text-anchor="middle" fill="#000">%s</text>' % [w / 2.0, title])
+	parts.append('<g transform="translate(%.1f,%.1f)">%s</g>' % [img_x0, TITLE_H, body_vector])
 
 	for ll in leader_lines:
-		parts.append('<path d="%s" fill="none" stroke="#000" stroke-width="0.3"/>' % _pts_to_path(ll["pts"]))
+		parts.append('<path d="%s" fill="none" stroke="#000" stroke-width="1.0"/>' % _pts_to_path(ll["pts"]))
 		var a0: Vector2 = ll["anchor"]
 		# iFire 2026-11-08: "use something instead of a solid circle
 		# for minature figures pointings" -- model-kit/Gunpla manuals
@@ -608,15 +646,15 @@ func _panel_svg(view_idx: int, vd: Dictionary, png_b64: String, label_queue: Arr
 		# a solid filled dot: it reads as "point at this exact spot"
 		# without a heavy blob obscuring the measurement tape curve
 		# directly underneath it.
-		parts.append('<circle cx="%.2f" cy="%.2f" r="1.05" fill="none" stroke="#000" stroke-width="0.35"/>' % [a0.x, a0.y])
+		parts.append('<circle cx="%.2f" cy="%.2f" r="3.6" fill="none" stroke="#000" stroke-width="1.2"/>' % [a0.x, a0.y])
 
 	for lt in label_texts:
 		var lines: Array = str(lt["text"]).split("\n")
 		var col: Color = lt["color"]
 		var hexcol := "#%02x%02x%02x" % [int(col.r * 255), int(col.g * 255), int(col.b * 255)]
 		for li in lines.size():
-			var dy: float = float(li) * 4.0
-			parts.append('<text x="%.2f" y="%.2f" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="700" text-anchor="%s" fill="%s">%s</text>' %
+			var dy: float = float(li) * 15.0
+			parts.append('<text x="%.2f" y="%.2f" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="700" text-anchor="%s" fill="%s">%s</text>' %
 				[lt["x"], lt["z"] + dy, lt["anchor"], hexcol, lines[li]])
 
 	return "\n".join(parts)
@@ -633,14 +671,14 @@ func _place_column(items: Array, margin_x: float, rail_sign: float, img_x0: floa
 	# actual text-margin band and let rails/labels overshoot into the
 	# next panel or off the canvas edge -- the same class of bug found
 	# earlier in the pure-vector version, see docs/CHANGELOG.md).
-	# Budget: TEXT_MARGIN total, minus the initial 5px offset, minus
-	# ~37px reserved for the longest label text itself (quarter-scale font).
-	var max_rail_reach: float = max(5.0, TEXT_MARGIN - 5.0 - 37.0)
+	# Budget: TEXT_MARGIN total, minus the initial 15px offset, minus
+	# ~140px reserved for the longest label text itself.
+	var max_rail_reach: float = max(15.0, TEXT_MARGIN - 15.0 - 140.0)
 	var rail_spacing: float = max_rail_reach / max(1, n - 1) if n > 1 else 0.0
 	for i in n:
 		var item = items[i]
 		var label_y: float = top + step * i if n > 1 else (top + bottom) / 2.0
-		var rail_x: float = margin_x + rail_sign * (5.0 + i * rail_spacing)
+		var rail_x: float = margin_x + rail_sign * (15.0 + i * rail_spacing)
 		var anchor := Vector2(item["x"] + img_x0, item["z"] + TITLE_H)
 		# iFire 2026-11-08: "I don't like how the lines block the
 		# reading of the measurement tapes" -- the leader line used to
@@ -658,8 +696,8 @@ func _place_column(items: Array, margin_x: float, rail_sign: float, img_x0: floa
 			"pts": [exit_point, Vector2(rail_x, exit_point.y), Vector2(rail_x, label_y), Vector2(margin_x, label_y)],
 		})
 		var ha := "end" if rail_sign < 0 else "start"
-		var text_x: float = margin_x - (1.5 if rail_sign < 0 else -1.5)
-		label_texts.append({"text": item["text"], "x": text_x, "z": label_y - 1.0, "color": item["color"], "anchor": ha})
+		var text_x: float = margin_x - (5.0 if rail_sign < 0 else -5.0)
+		label_texts.append({"text": item["text"], "x": text_x, "z": label_y - 3.5, "color": item["color"], "anchor": ha})
 
 
 func _pts_to_path(pts: Array) -> String:
@@ -672,7 +710,7 @@ func _pts_to_path(pts: Array) -> String:
 
 func _compose_tiled_svg(panels: Array) -> String:
 	var cols := 2
-	var gap := 6.0
+	var gap := 20.0
 	var col_w := 0.0
 	for p in panels:
 		col_w = max(col_w, p["w"])
@@ -686,8 +724,8 @@ func _compose_tiled_svg(panels: Array) -> String:
 	# clipped there (iFire: "the borders need spans add white space" /
 	# "the borders are clipped add white space"). A real page margin on
 	# all four sides fixes that for every panel, not just the corner one.
-	var page_pad := 10.0
-	var header_h := 14.0
+	var page_pad := 20.0
+	var header_h := 50.0
 	var grid_w := col_w * cols + gap * (cols - 1)
 	var grid_h := row_h * rows + gap * (rows - 1)
 	var total_w := grid_w + 2.0 * page_pad
@@ -697,8 +735,8 @@ func _compose_tiled_svg(panels: Array) -> String:
 	parts.append('<?xml version="1.0" encoding="utf-8"?>')
 	parts.append('<svg xmlns="http://www.w3.org/2000/svg" width="%.1f" height="%.1f" viewBox="0 0 %.1f %.1f">' % [total_w, total_h, total_w, total_h])
 	parts.append('<rect width="100%%" height="100%%" fill="white"/>'.replace("%%", "%"))
-	parts.append('<text x="%.1f" y="%.1f" font-family="Helvetica, Arial, sans-serif" font-size="5" font-weight="700" text-anchor="middle" fill="#000">ANNY-SOMA-X — 26 GarmentCode measurement locations, real order-independent (OIT) render, %d Hammersley-sequence views</text>' % [total_w / 2.0, page_pad + 7.0, panels.size()])
-	parts.append('<text x="%.1f" y="%.1f" font-family="Helvetica, Arial, sans-serif" font-size="3.5" font-weight="500" text-anchor="middle" fill="#1f2937">green curves = geodesic/circumference fields; amber = Euclidean; red = 2 reverted to unsettled — each field placed on the view that best faces it</text>' % [total_w / 2.0, page_pad + 11.0])
+	parts.append('<text x="%.1f" y="%.1f" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="700" text-anchor="middle" fill="#000">ANNY-SOMA-X — 26 GarmentCode measurement locations, real order-independent (OIT) render, %d Hammersley-sequence views (left/right)</text>' % [total_w / 2.0, page_pad + 22.0, panels.size()])
+	parts.append('<text x="%.1f" y="%.1f" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="500" text-anchor="middle" fill="#1f2937">green curves = geodesic/circumference fields; amber = Euclidean; red = 2 reverted to unsettled — each field placed on the view that best faces it</text>' % [total_w / 2.0, page_pad + 40.0])
 	for i in panels.size():
 		var p = panels[i]
 		var col := i % cols
@@ -716,7 +754,7 @@ func _compose_tiled_svg(panels: Array) -> String:
 		# background color alone to separate panels; a drawn border
 		# spans the entire panel rectangle so the boundary is explicit
 		# regardless of what's rendered inside.
-		parts.append('<rect x="0.3" y="0.3" width="%.1f" height="%.1f" fill="none" stroke="#000" stroke-width="0.5"/>' % [p["w"] - 0.6, p["h"] - 0.6])
+		parts.append('<rect x="0.5" y="0.5" width="%.1f" height="%.1f" fill="none" stroke="#000" stroke-width="1.0"/>' % [p["w"] - 1.0, p["h"] - 1.0])
 		parts.append('</g>')
 	parts.append('</svg>')
 	return "\n".join(parts)
