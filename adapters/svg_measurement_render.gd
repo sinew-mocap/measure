@@ -504,7 +504,7 @@ func _render_view(vd: Dictionary, view_idx: int, array_mesh: ArrayMesh, body_cen
 	body_mi.mesh = array_mesh
 	scene_root.add_child(body_mi)
 
-	var half_width := 0.006  # world units; ~1.2cm-scale ribbon, reads clearly at this render size
+	var half_width := 0.013  # world units; ~2.6cm-scale ribbon -- widened from 1.2cm (iFire: "the measuring tape is too thing")
 	for item in curve_items:
 		var mi := _ribbon_mesh_curvenet(curvenet_sb, item["pts3d"], item["color"], item["closed"], half_width)
 		if mi != null:
