@@ -1,33 +1,47 @@
 extends SceneTree
-# Multi-view measurement-location SVG, generated entirely in GDScript.
-# iFire 2026-11-08: "the svg generator needs to be godot", then (after
-# a single crammed front view came back genuinely cluttered/crossing):
-# "use multiple hammersly orbit views so that there's less clutter".
+# Real OIT-rendered measurement SVG: the body is rendered through
+# Godot's actual AVBOIT (order-independent transparency) 3D pipeline --
+# iFire 2026-11-08, after the pure-vector silhouette-edge version:
+# "you must use order independent rendering. it is very wrong." The
+# prior silhouette-edge CPU test (front/back-facing sign flip per
+# edge) has no notion of occlusion: it drew edges that were correct
+# "silhouette" edges in isolation but actually hidden behind nearer
+# body geometry from that view, since there was no depth test at all --
+# a 2D vector approximation can't solve that; real depth-tested 3D
+# rendering can, trivially, per-fragment, with no sort-order
+# dependency (the actual point of OIT: no per-triangle draw-order
+# sorting needed for correct transparency compositing either).
 #
-# Camera distribution: the REAL `sphere_hammersley_sequence`
+# Clarified approach (iFire, 2026-11-08): render the body via the real
+# OIT pipeline (same technique as adapters/xray_oit_render.gd) to a
+# PNG per view, embed that PNG as the SVG's body background, with
+# labels and leader lines as a vector overlay on top -- so the
+# labeling/layout code (type-opo boundary labeling, capacity-balanced
+# per-field view assignment, real cm/deg values) stays exactly as
+# validated, just driven by Godot's own cam.unproject_position() for
+# pixel-perfect alignment with the rendered PNG, instead of a
+# hand-rolled dot-product projection that could drift from what's
+# actually on screen.
+#
+# Camera: orthogonal (not perspective) -- matches the uniform-scale
+# assumption the boundary-labeling math and the SVG pixel transform
+# both rely on; a perspective camera's foreshortening would make
+# anchor-to-pixel distances non-uniform across the frame.
+#
+# Measurement curves (circumference loops, geodesic/Euclidean lines)
+# are drawn as real 3D line meshes (depth-tested against the body, so
+# a curve on the far side of the body is correctly hidden) and get
+# baked into the same PNG as the body -- not drawn as flat SVG paths
+# anymore, since that was the exact class of "ignores real occlusion"
+# bug this whole change fixes.
+#
+# Camera distribution: the REAL sphere_hammersley_sequence
 # (TencentARC/Pixal3D @ cdbb2bb), ported exactly from this repo's own
-# `render_view.py` (anny-render-corpus) -- not a hand-rolled orbit.
-# That file's own header explains why: "the first pass here put four
-# cameras at 0, 90, 180 and 270 degrees... that is a made-up rig" --
-# the same house rule applies here, so this reuses the identical
-# radical_inverse/sphere_hammersley math, not a re-derivation.
-#
-# Each of the N=4 views gets its OWN real 3D camera basis (not just a
-# front/back X,Z swap); every curve/anchor is projected into that
-# view's actual screen plane. Each labeled field is assigned to
-# whichever view's camera direction most directly faces its real 3D
-# anchor (highest dot product) -- real visibility, not a name-based
-# "back_width -> back view" heuristic -- so the ~26 fields spread
-# naturally across panels instead of piling onto one.
-#
-# Label layout per panel: Bekos, Kaufmann, Symvonis & Wolff (2007)
-# type-opo boundary labeling, same as before -- but with the rail
-# placement reverted to NEAR THE MARGIN (matching xray_oit_render.gd,
-# which verified clean), not near the body. The near-body variant this
-# file shipped earlier produced real crossings (an anchor whose x was
-# near the body centerline got a "short" first segment that was
-# actually almost as long as the whole panel width, defeating the
-# design and crossing other leaders) -- see docs/CHANGELOG.md.
+# render_view.py -- not a hand-rolled orbit. 4 real samples from a
+# 16-sample sequence (indices 4/6/5/7: smallest-pitch combination
+# whose yaws land exactly 90 degrees apart; i=0's pitch is -90, a
+# known degenerate case the house render-anny-sphere-hammersley skill
+# documents).
 
 const CORPUS_ROOT := "/Users/ernest.lee/3-interactor/meshing-pen/6-datasource/anny-render-corpus/"
 const OBJ_PATH := CORPUS_ROOT + "build/anny_export/anny-soma-x.obj"
@@ -36,21 +50,14 @@ const OUT_SVG := EXPORT_DIR + "anny_measurement_wireframe_godot.svg"
 
 const LOOP_FIELDS := ["waist", "hips", "bust", "underbust", "leg_circ", "wrist", "neck_w"]
 const EUCLID_DASHED_FIELDS := ["shoulder_w", "armscye_depth", "bust_points", "bum_points"]
-# 4 real samples from a 16-sample sphere_hammersley_sequence, chosen for
-# this use case (a readable 2D label diagram, not full-sphere photoreal
-# coverage): sorted by |pitch| ascending, these are the first 4 whose
-# yaws land exactly 90 degrees apart (45/135/225/315) -- i=0's pitch is
-# -90 (straight down, a known degenerate case the house
-# render-anny-sphere-hammersley skill already documents) and most other
-# low indices either repeat a yaw or carry a steep pitch; this
-# selection is the smallest-pitch combination with full yaw coverage.
-# Still the real generator, real samples -- a chosen SUBSET of indices
-# (normal usage per render_view.py's own --index/--views flags), not a
-# hand-rolled angle.
 const HAMMERSLEY_N := 16
 const VIEW_INDICES := [4, 6, 5, 7]
 const NUM_VIEWS := 4
 const PRIMES0 := 2
+const IMG_W := 688
+const IMG_H := 650  # sized so the full 2x2 composite lands on 2560x1440 (QHD), a real standard resolution
+const TEXT_MARGIN := 290.0
+const TITLE_H := 30.0
 
 
 func _load_json(path: String) -> Variant:
@@ -79,7 +86,6 @@ func _radical_inverse(base: int, n: int) -> float:
 
 
 # Exact port of render_view.py's sphere_hammersley(i, num_samples, offset).
-# Returns [phi (yaw, radians), theta (pitch, radians)].
 func _sphere_hammersley(i: int, num_samples: int, offset: Vector2 = Vector2.ZERO) -> Vector2:
 	var u: float = float(i) / num_samples + offset.x / num_samples
 	var v: float = _radical_inverse(PRIMES0, i) + offset.y
@@ -89,34 +95,13 @@ func _sphere_hammersley(i: int, num_samples: int, offset: Vector2 = Vector2.ZERO
 	return Vector2(phi, theta)
 
 
-class ViewCam:
-	var eye_dir: Vector3
-	var right: Vector3
-	var up: Vector3
-	var phi: float
-	var theta: float
-
-	func project(p: Vector3) -> Vector2:
-		return Vector2(p.dot(right), p.dot(up))
-
-
-func _make_view(phi: float, theta: float) -> ViewCam:
-	var cam := ViewCam.new()
-	cam.phi = phi
-	cam.theta = theta
-	# eye = (cos(yaw)cos(pitch), sin(yaw)cos(pitch), sin(pitch)) -- the
-	# exact upstream formula (render_view.py header), Z-up.
-	cam.eye_dir = Vector3(cos(phi) * cos(theta), sin(phi) * cos(theta), sin(theta)).normalized()
-	var world_up := Vector3(0, 0, 1)
-	if absf(cam.eye_dir.dot(world_up)) > 0.999:
-		world_up = Vector3(1, 0, 0)  # near the poles: fall back to an arbitrary non-parallel up
-	cam.right = world_up.cross(cam.eye_dir).normalized()
-	cam.up = cam.eye_dir.cross(cam.right).normalized()
-	return cam
-
-
 func _init() -> void:
-	# --- load the real mesh ---
+	# sanity: confirm this IS the OIT build (same check as xray_oit_render.gd)
+	if not ProjectSettings.has_setting("rendering/oit/enabled") or not bool(ProjectSettings.get_setting("rendering/oit/enabled")):
+		printerr("rendering/oit/enabled is not set -- this is NOT the OIT build. Refusing to fake it.")
+		quit(1)
+		return
+
 	var obj_bytes := FileAccess.get_file_as_string(OBJ_PATH)
 	if obj_bytes.is_empty():
 		printerr("could not read OBJ at ", OBJ_PATH)
@@ -145,6 +130,9 @@ func _init() -> void:
 	for v in verts:
 		zmin = min(zmin, v.z)
 		zmax = max(zmax, v.z)
+	var radius := 0.0
+	for v in verts:
+		radius = max(radius, v.distance_to(body_center))
 
 	var manifest = _load_json(EXPORT_DIR + "paths_manifest.json")
 	var angle_values = _load_json(EXPORT_DIR + "angle_fields.json")
@@ -154,15 +142,32 @@ func _init() -> void:
 		quit(1)
 		return
 
-	# --- build the N real Hammersley-sequence cameras ---
-	var views: Array[ViewCam] = []
+	# real ArrayMesh, winding swap (same convention as xray_oit_render.gd)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for f in faces:
+		st.add_vertex(verts[f[0]])
+		st.add_vertex(verts[f[2]])
+		st.add_vertex(verts[f[1]])
+	st.generate_normals()
+	var array_mesh: ArrayMesh = st.commit()
+
+	var body_mat := StandardMaterial3D.new()
+	body_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	body_mat.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	body_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	body_mat.albedo_color = Color(0.70, 0.66, 0.60, 0.55)  # warm light gray, translucent OIT body
+	array_mesh.surface_set_material(0, body_mat)
+
+	# --- real 4-view Hammersley camera distribution ---
+	var view_dirs: Array = []  # {eye_dir, phi, theta}
 	for idx in VIEW_INDICES:
 		var ph: Vector2 = _sphere_hammersley(idx, HAMMERSLEY_N, Vector2.ZERO)
-		views.append(_make_view(ph.x, ph.y))
+		var eye_dir := Vector3(cos(ph.x) * cos(ph.y), sin(ph.x) * cos(ph.y), sin(ph.y)).normalized()
+		view_dirs.append({"eye_dir": eye_dir, "phi": ph.x, "theta": ph.y})
 		print("view (hammersley i=", idx, "/", HAMMERSLEY_N, ") yaw=", rad_to_deg(ph.x), "deg pitch=", rad_to_deg(ph.y), "deg")
 
-	# --- collect every real curve/loop field with its full 3D anchor ---
-	# items: {text, anchor3d: Vector3, line_color, text_color, dashed, closed, pts3d (Array[Vector3])}
+	# --- every real curve/loop field, full 3D data ---
 	var curve_items: Array = []
 	for field_name in manifest.keys():
 		var rel_path: String = str(manifest[field_name])
@@ -173,38 +178,29 @@ func _init() -> void:
 		var line3d = path_json[0]
 		if line3d.size() < 2:
 			continue
-		var pts3d: Array[Vector3] = []
+		var pts3d: PackedVector3Array = PackedVector3Array()
 		var sum3 := Vector3.ZERO
 		for p in line3d:
 			var pv := Vector3(float(p[0]), float(p[1]), float(p[2]))
 			pts3d.append(pv)
 			sum3 += pv
 		var anchor3d: Vector3 = sum3 / pts3d.size()
-		# every circumference/geodesic/Euclidean field has a real cm
-		# value in angle_fields.json -- append it so the label always
-		# carries a number WITH its unit, not just the bare field name
-		# (iFire 2026-11-08: "your measures seem to lack units with
-		# numerics sometimes").
 		var val_cm = angle_values.get(field_name + "_cm")
 		var text: String = field_name
 		if val_cm != null:
 			text = "%s\n%.1fcm" % [field_name, float(val_cm)]
+		var dashed: bool = field_name in EUCLID_DASHED_FIELDS
 		curve_items.append({
 			"text": text, "anchor3d": anchor3d, "pts3d": pts3d,
-			"closed": field_name in LOOP_FIELDS, "dashed": field_name in EUCLID_DASHED_FIELDS,
-			"line_color": Color(0.086, 0.639, 0.290), "text_color": Color(0.086, 0.396, 0.204),
+			"closed": field_name in LOOP_FIELDS,
+			"color": Color(0.75, 0.42, 0.0) if dashed else Color(0.0, 0.45, 0.1),
+			"text_color": Color(0.498, 0.235, 0.0) if dashed else Color(0.086, 0.396, 0.204),
 		})
 
-	# --- angle/diff + unsettled fields + axis ticks: layout_hints.json
-	# only gives a 2D (x, z) placement (no real depth), so give each a
-	# pseudo-3D position at y=0 and project it through whichever
-	# camera it's assigned to, same as every real-3D item -- this is
-	# what lets them distribute across views instead of all dumping on
-	# one panel, and still project correctly for any of the 4 cameras
-	# (not just the original X,Z front convention).
+	# --- fixed-position items (angle markers, axis ticks, 2 unsettled) ---
 	var torso: Dictionary = hints["torso_heights"]
 	var head_top_z: float = float(hints["head_top_z"])
-	var fixed_items: Array = []  # {text, pos3d, line_color, text_color}
+	var fixed_items: Array = []  # {text, pos3d, color, text_color, match_name (optional)}
 	for field_name in ["shoulder_incl", "hip_inclination", "arm_pose_angle", "crotch_hip_diff"]:
 		if not hints["marker_anchors"].has(field_name):
 			continue
@@ -213,12 +209,13 @@ func _init() -> void:
 		var ax: float = float(m["dx"])
 		var az: float = z_ref + float(m["dz"])
 		var val = angle_values.get(field_name + "_deg")
+		var unit := "deg"
 		if val == null:
 			val = angle_values.get(field_name + "_cm")
-		var unit := "deg" if angle_values.has(field_name + "_deg") else "cm"
+			unit = "cm"
 		var text := "%s\n%.1f%s" % [field_name, float(val), unit]
 		fixed_items.append({"text": text, "pos3d": Vector3(ax, 0.0, az),
-			"line_color": Color(0.086, 0.639, 0.290), "text_color": Color(0.086, 0.396, 0.204)})
+			"color": Color(0.0, 0.45, 0.1), "text_color": Color(0.086, 0.396, 0.204)})
 	for field_name in ["bust_line", "waist_over_bust_line"]:
 		if not hints["marker_anchors"].has(field_name):
 			continue
@@ -227,10 +224,10 @@ func _init() -> void:
 		var ax2: float = float(m2["dx"])
 		var az2: float = z_ref2 + float(m2["dz"])
 		fixed_items.append({"text": field_name, "pos3d": Vector3(ax2, 0.0, az2),
-			"line_color": Color(0.863, 0.149, 0.149), "text_color": Color(0.498, 0.114, 0.114)})
+			"color": Color(0.80, 0.15, 0.15), "text_color": Color(0.498, 0.114, 0.114)})
 
 	var axis_tick_x := {"head_l": 0.55, "vert_bust_line": 0.62}
-	var axis_ticks: Array = []  # {name, pos3d_a, pos3d_b}
+	var axis_ticks: Array = []
 	for name in axis_tick_x.keys():
 		if not hints["axis_ticks"].has(name):
 			continue
@@ -239,54 +236,33 @@ func _init() -> void:
 		var zb: float = float(pair[1][2])
 		var x := float(axis_tick_x[name])
 		axis_ticks.append({"name": name, "pos3d_a": Vector3(x, 0.0, za), "pos3d_b": Vector3(x, 0.0, zb)})
-		var tick_val_cm = angle_values.get(name + "_cm")
-		var tick_text: String = name
-		if tick_val_cm != null:
-			tick_text = "%s\n%.1fcm" % [name, float(tick_val_cm)]
-		fixed_items.append({"text": tick_text, "match_name": name, "pos3d": Vector3(x, 0.0, (za + zb) / 2.0),
-			"line_color": Color(0.086, 0.639, 0.290), "text_color": Color(0.086, 0.396, 0.204)})
+		var tv = angle_values.get(name + "_cm")
+		var tt: String = name
+		if tv != null:
+			tt = "%s\n%.1fcm" % [name, float(tv)]
+		fixed_items.append({"text": tt, "match_name": name, "pos3d": Vector3(x, 0.0, (za + zb) / 2.0),
+			"color": Color(0.0, 0.45, 0.1), "text_color": Color(0.086, 0.396, 0.204)})
 
-	# round-robin distribute the fixed items (and their matching axis
-	# ticks) across all views for balance, same reasoning as the curve
-	# items above -- these have no real facing direction to rank by.
+	# --- capacity-balanced per-field view assignment (same algorithm as
+	# the pure-vector version, just by eye_dir dict instead of ViewCam) ---
+	var per_view_curves: Array = []
 	var per_view_fixed: Array = []
 	var per_view_axis_ticks: Array = []
 	for i in NUM_VIEWS:
+		per_view_curves.append([])
 		per_view_fixed.append([])
 		per_view_axis_ticks.append([])
-	for i in fixed_items.size():
-		per_view_fixed[i % NUM_VIEWS].append(fixed_items[i])
-	for t in axis_ticks:
-		var owning_view: int = 0
-		for i in fixed_items.size():
-			if fixed_items[i].get("match_name", fixed_items[i]["text"]) == t["name"]:
-				owning_view = i % NUM_VIEWS
-				break
-		per_view_axis_ticks[owning_view].append(t)
-
-	# --- assign each real-3D curve field to the view whose camera
-	# direction most directly faces its anchor: real visibility, via
-	# dot(eye_dir, anchor - body_center) -- but CAPACITY-BALANCED, not
-	# pure greedy-best. GarmentCode's own fields are mostly front-torso
-	# landmarks by nature, so a pure "best match" assignment piles most
-	# of the 26 onto whichever one view faces the front, defeating the
-	# point of splitting across views. Each item ranks ALL views by dot
-	# product; items are processed in order of their OWN top-choice
-	# confidence (most unambiguous first), each taking its best-ranked
-	# view that still has room under a per-view cap.
-	var per_view_curves: Array = []
-	for i in NUM_VIEWS:
-		per_view_curves.append([])
-	var ranked_items: Array = []  # {item, ranking: Array[int] (view idx, best dot first), top_dot}
+	var ranked_items: Array = []
 	for item in curve_items:
 		var dir3: Vector3 = (item["anchor3d"] - body_center)
-		dir3.z = 0.0  # facing is about XY orientation around the standing axis
+		dir3.z = 0.0
 		if dir3.length() < 0.0001:
 			dir3 = Vector3(1, 0, 0)
 		dir3 = dir3.normalized()
 		var dots: Array = []
 		for i in NUM_VIEWS:
-			dots.append({"i": i, "d": views[i].eye_dir.dot(dir3)})
+			var ev: Vector3 = view_dirs[i]["eye_dir"]
+			dots.append({"i": i, "d": ev.dot(dir3)})
 		dots.sort_custom(func(a, b): return a["d"] > b["d"])
 		var ranking: Array = []
 		for d in dots:
@@ -302,46 +278,39 @@ func _init() -> void:
 				placed = true
 				break
 		if not placed:
-			per_view_curves[ri["ranking"][0]].append(ri["item"])  # all at cap: take the best anyway
+			per_view_curves[ri["ranking"][0]].append(ri["item"])
+	for i in fixed_items.size():
+		per_view_fixed[i % NUM_VIEWS].append(fixed_items[i])
+	for t in axis_ticks:
+		var owning_view: int = 0
+		for i in fixed_items.size():
+			if fixed_items[i].get("match_name", fixed_items[i]["text"]) == t["name"]:
+				owning_view = i % NUM_VIEWS
+				break
+		per_view_axis_ticks[owning_view].append(t)
 
-	# --- true silhouette edges, not a stride-sampled dump of every
-	# triangle's 3 edges. The ANNY-SOMA-X mesh is genuinely
-	# triangle-topology (model.faces straight from the Anny PyTorch
-	# model, 36108 faces, all 3-vertex -- not something this pipeline
-	# triangulates), so drawing every edge of every sampled face drew
-	# the internal diagonal that splits each roughly-quad patch in
-	# two, reading as fine triangulated static across the body surface
-	# (iFire 2026-11-08: "why is the mesh triangles and not polygonal").
-	# A silhouette edge is one whose two adjacent faces disagree on
-	# front/back-facing relative to THIS view's camera (or a true mesh
-	# boundary edge with only one adjacent face) -- standard technical-
-	# illustration convention. This is per-view (front/back-facing
-	# depends on eye_dir), computed once here and reused by all panels
-	# via their own view's dot product.
-	var face_normals: PackedVector3Array = PackedVector3Array()
-	face_normals.resize(faces.size())
-	var edge_faces: Dictionary = {}  # "i_j" (i<j) -> Array[face_idx], up to 2
-	for fi in faces.size():
-		var f = faces[fi]
-		var a: Vector3 = verts[f[0]]
-		var b: Vector3 = verts[f[1]]
-		var c: Vector3 = verts[f[2]]
-		face_normals[fi] = (b - a).cross(c - a).normalized()
-		var idx3 := [f[0], f[1], f[2]]
-		for k in 3:
-			var i0: int = idx3[k]
-			var i1: int = idx3[(k + 1) % 3]
-			var key := "%d_%d" % [min(i0, i1), max(i0, i1)]
-			if not edge_faces.has(key):
-				edge_faces[key] = []
-			edge_faces[key].append(fi)
+	# --- render each view through the real OIT pipeline ---
+	root.size = Vector2i(IMG_W, IMG_H)
+	DisplayServer.window_set_size(Vector2i(IMG_W, IMG_H))
+	root.transparent_bg = false
+	for i in 4:
+		await process_frame
+	var actual_size: Vector2i = root.get_viewport().get_visible_rect().size
+	if actual_size != Vector2i(IMG_W, IMG_H):
+		printerr("WARNING: viewport size is ", actual_size, " not the requested ", Vector2i(IMG_W, IMG_H),
+			" -- window resize did not take effect in this run mode")
+	var env := Environment.new()
+	env.background_mode = Environment.BG_COLOR
+	env.background_color = Color(1, 1, 1)
+	env.tonemap_mode = Environment.TONE_MAPPER_LINEAR
+	env.ssao_enabled = false
+	env.glow_enabled = false
 
-	# --- build each panel (each computes its own silhouette) ---
-	var panels: Array = []  # {svg_body, w, h}
+	var panels: Array = []
 	for i in NUM_VIEWS:
-		var wire_edges := _silhouette_edges(views[i], verts, faces, face_normals, edge_faces)
-		panels.append(_build_panel(views[i], i, wire_edges, per_view_curves[i],
-			per_view_fixed[i], per_view_axis_ticks[i], zmin, zmax))
+		var p = await _render_view(view_dirs[i], i, array_mesh, body_center, zmin, zmax, radius, env,
+			per_view_curves[i], per_view_fixed[i], per_view_axis_ticks[i])
+		panels.append(p)
 
 	var svg := _compose_tiled_svg(panels)
 	var f_out := FileAccess.open(OUT_SVG, FileAccess.WRITE)
@@ -359,212 +328,165 @@ func _resolve_z_ref(name: String, torso: Dictionary, head_top_z: float) -> float
 	return float(torso[name])
 
 
-func _silhouette_edges(cam: ViewCam, verts: PackedVector3Array, faces: Array,
-		face_normals: PackedVector3Array, edge_faces: Dictionary) -> Array:
-	var edges: Array = []  # [Vector3, Vector3]
-	for key in edge_faces.keys():
-		var fs: Array = edge_faces[key]
-		var is_silhouette := false
-		if fs.size() == 1:
-			is_silhouette = true  # true mesh boundary (open edge)
-		else:
-			var side_a: float = face_normals[fs[0]].dot(cam.eye_dir)
-			var side_b: float = face_normals[fs[1]].dot(cam.eye_dir)
-			is_silhouette = (side_a >= 0.0) != (side_b >= 0.0)  # front/back disagree
-		if not is_silhouette:
-			continue
-		var parts: PackedStringArray = key.split("_")
-		var i0: int = int(parts[0])
-		var i1: int = int(parts[1])
-		edges.append([verts[i0], verts[i1]])
-	return edges
+func _line_mesh(points: PackedVector3Array, color: Color, closed: bool) -> MeshInstance3D:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_LINE_STRIP)
+	for p in points:
+		st.add_vertex(p)
+	if closed and points.size() > 1:
+		st.add_vertex(points[0])
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.albedo_color = color
+	m.no_depth_test = false  # real depth test: a curve behind the body is correctly hidden
+	var mesh := st.commit()
+	mesh.surface_set_material(0, m)
+	var mi := MeshInstance3D.new()
+	mi.mesh = mesh
+	return mi
 
 
-# One panel: projects everything into this view's 2D (right, up) plane,
-# runs the type-opo boundary labeling for just this panel's items, and
-# returns the SVG body fragment + its own width/height.
-func _build_panel(cam: ViewCam, view_idx: int, wire_edges: Array, curve_items: Array,
-		fixed_items: Array, axis_ticks_panel: Array,
-		zmin: float, zmax: float) -> Dictionary:
-	# project wireframe edges
-	var wire_2d: Array = []
-	for e in wire_edges:
-		wire_2d.append([cam.project(e[0]), cam.project(e[1])])
+func _render_view(vd: Dictionary, view_idx: int, array_mesh: ArrayMesh, body_center: Vector3,
+		zmin: float, zmax: float, radius: float, env: Environment,
+		curve_items: Array, fixed_items: Array, axis_ticks_panel: Array) -> Dictionary:
+	var scene_root := Node3D.new()
+	root.add_child(scene_root)
+	await process_frame
 
-	# project curves + compute 2D anchors
-	var curves_2d: Array = []
+	var body_mi := MeshInstance3D.new()
+	body_mi.mesh = array_mesh
+	scene_root.add_child(body_mi)
+
+	for item in curve_items:
+		scene_root.add_child(_line_mesh(item["pts3d"], item["color"], item["closed"]))
+	for t in axis_ticks_panel:
+		var pts := PackedVector3Array([t["pos3d_a"], t["pos3d_b"]])
+		scene_root.add_child(_line_mesh(pts, Color(0.0, 0.45, 0.1), false))
+
+	var cam := Camera3D.new()
+	cam.environment = env
+	cam.projection = Camera3D.PROJECTION_ORTHOGONAL
+	cam.size = (zmax - zmin) + 0.35  # world-space vertical extent, +margin above/below body
+	cam.near = 0.01
+	cam.far = radius * 8.0
+	var eye_dir: Vector3 = vd["eye_dir"]
+	cam.position = body_center + eye_dir * radius * 3.0
+	scene_root.add_child(cam)
+	var up := Vector3(0, 0, 1)
+	if absf(eye_dir.dot(up)) > 0.999:
+		up = Vector3(1, 0, 0)
+	cam.look_at(body_center, up)
+
+	for i in 6:
+		await process_frame
+
+	var img := root.get_viewport().get_texture().get_image()
+	var png_bytes: PackedByteArray = img.save_png_to_buffer()
+	var b64 := Marshalls.raw_to_base64(png_bytes)
+
+	# --- pixel-perfect anchors via Godot's OWN camera projection ---
 	var label_queue: Array = []
 	for item in curve_items:
-		var pts2d := PackedVector2Array()
-		for p3 in item["pts3d"]:
-			pts2d.append(cam.project(p3))
-		curves_2d.append({"pts": pts2d, "color": item["line_color"], "dashed": item["dashed"], "closed": item["closed"]})
-		var sx := 0.0
-		var sy := 0.0
-		for p in pts2d:
-			sx += p.x
-			sy += p.y
-		sx /= pts2d.size()
-		sy /= pts2d.size()
-		label_queue.append({"text": item["text"], "x": sx, "z": sy,
-			"line_color": item["line_color"], "text_color": item["text_color"]})
-
-	# fixed-position items (angle markers, axis ticks, unsettled fields)
-	# have no real depth, so they were given a pseudo-3D position at
-	# y=0 -- project that through THIS panel's own camera, same as
-	# every real curve item, so they land correctly regardless of
-	# which view they were round-robin assigned to.
+		var p: Vector2 = cam.unproject_position(item["anchor3d"])
+		label_queue.append({"text": item["text"], "x": p.x, "z": p.y, "color": item["text_color"]})
 	for item2 in fixed_items:
-		var p2d: Vector2 = cam.project(item2["pos3d"])
-		label_queue.append({"text": item2["text"], "x": p2d.x, "z": p2d.y,
-			"line_color": item2["line_color"], "text_color": item2["text_color"]})
+		var p2: Vector2 = cam.unproject_position(item2["pos3d"])
+		label_queue.append({"text": item2["text"], "x": p2.x, "z": p2.y, "color": item2["text_color"]})
 
-	var axis_ticks_2d: Array = []
-	for t in axis_ticks_panel:
-		axis_ticks_2d.append({"name": t["name"], "pt_a": cam.project(t["pos3d_a"]), "pt_b": cam.project(t["pos3d_b"])})
+	scene_root.queue_free()
+	await process_frame
 
-	if label_queue.is_empty() and curves_2d.is_empty():
-		return {"body": "", "w": 0.0, "h": 0.0}
+	var body := _panel_svg(view_idx, vd, b64, label_queue)
+	return {"body": body, "w": float(IMG_W) + 2.0 * TEXT_MARGIN, "h": float(IMG_H) + TITLE_H}
 
-	# --- type-opo boundary labeling, THIS PANEL ONLY, rails NEAR THE
-	# MARGIN (reverted from the near-body variant -- see module doc) ---
-	var margin_z_top: float = zmax - 0.05
-	var margin_z_bottom: float = zmin + 0.05
-	var margin_x_left := -1.25
-	var margin_x_right := 1.20
-	var rail_base := 0.05
+
+# Type-opo boundary labeling over REAL screen-pixel anchors (from
+# cam.unproject_position -- guaranteed to match the embedded PNG
+# pixel-for-pixel, since both come from the same Godot camera).
+func _panel_svg(view_idx: int, vd: Dictionary, png_b64: String, label_queue: Array) -> String:
+	var w := float(IMG_W) + 2.0 * TEXT_MARGIN
+	var img_x0 := TEXT_MARGIN
+	# Rails terminate just outside the image edge; labels live in the
+	# remaining TEXT_MARGIN band beyond that, growing AWAY from the
+	# image (left column: right-aligned text growing further left;
+	# right column: left-aligned text growing further right) -- not
+	# at the canvas edge itself, which left zero room for the text
+	# and clipped it against the SVG boundary.
+	var left_margin_x := img_x0 - 20.0
+	var right_margin_x := img_x0 + float(IMG_W) + 20.0
 
 	var left_q: Array = []
 	var right_q: Array = []
-	for item3 in label_queue:
-		if item3["x"] < 0:
-			left_q.append(item3)
+	for item in label_queue:
+		if item["x"] < float(IMG_W) / 2.0:
+			left_q.append(item)
 		else:
-			right_q.append(item3)
-	left_q.sort_custom(func(a, b): return a["z"] > b["z"])
-	right_q.sort_custom(func(a, b): return a["z"] > b["z"])
+			right_q.append(item)
+	left_q.sort_custom(func(a, b): return a["z"] < b["z"])
+	right_q.sort_custom(func(a, b): return a["z"] < b["z"])
 
 	var leader_lines: Array = []
 	var label_texts: Array = []
-	_place_column(left_q, margin_x_left, -1.0, rail_base, margin_z_top, margin_z_bottom, leader_lines, label_texts)
-	_place_column(right_q, margin_x_right, 1.0, rail_base, margin_z_top, margin_z_bottom, leader_lines, label_texts)
+	_place_column(left_q, left_margin_x, -1.0, img_x0, TITLE_H, float(IMG_H) + TITLE_H, leader_lines, label_texts)
+	_place_column(right_q, right_margin_x, 1.0, img_x0, TITLE_H, float(IMG_H) + TITLE_H, leader_lines, label_texts)
 
-	var px_per_m := 300.0
-	var pad := 130.0  # wider: bold 14px labels need more room than the old thin 9px
-	var data_min_x := margin_x_left - 0.1
-	var data_max_x := margin_x_right + 0.1
-	var data_min_z := margin_z_bottom - 0.1
-	var data_max_z := zmax + 0.12
-	var svg_cx: float = -data_min_x * px_per_m + pad
-	var svg_bottom_z: float = data_max_z
-	var w: float = (data_max_x - data_min_x) * px_per_m + 2 * pad
-	var h: float = (data_max_z - data_min_z) * px_per_m + 2 * pad
-
-	var body := _panel_body(w, h, view_idx, cam, wire_2d, curves_2d, axis_ticks_2d, leader_lines,
-		label_texts, svg_cx, svg_bottom_z, px_per_m)
-	return {"body": body, "w": w, "h": h}
-
-
-func _place_column(items: Array, margin_x: float, rail_sign: float, rail_base: float,
-		margin_z_top: float, margin_z_bottom: float, leader_lines: Array, label_texts: Array) -> void:
-	var n := items.size()
-	if n == 0:
-		return
-	var step: float = (margin_z_top - margin_z_bottom) / max(1, n - 1) if n > 1 else 0.0
-	# Rail spacing scaled to the actual item count on THIS panel, capped
-	# so later rails can never reach past the margin (the real bug found
-	# in the single-view version -- see docs/CHANGELOG.md). With panels
-	# now carrying far fewer items each (visibility-split across 4
-	# views instead of ~26 on one), this matters less in practice but
-	# the cap stays so it is never reintroduced by construction.
-	var max_reach := 0.45  # rails stay within this x-distance of margin_x
-	var rail_spacing: float = max_reach / max(1, n - 1) if n > 1 else 0.0
-	for i in n:
-		var item = items[i]
-		var label_z: float = margin_z_top - step * i if n > 1 else (margin_z_top + margin_z_bottom) / 2.0
-		var rail_x: float = margin_x + rail_sign * (rail_base + i * rail_spacing)
-		leader_lines.append({
-			"pts": [Vector2(item["x"], item["z"]), Vector2(rail_x, item["z"]),
-					Vector2(rail_x, label_z), Vector2(margin_x, label_z)],
-			"color": item["line_color"],
-		})
-		var ha := "start" if rail_sign > 0 else "end"
-		var text_x: float = margin_x + (0.03 if rail_sign > 0 else -0.03)
-		label_texts.append({"text": item["text"], "x": text_x, "z": label_z + 0.025,
-			"color": item["text_color"], "anchor": ha})
-
-
-func _panel_body(w: float, h: float, view_idx: int, cam: ViewCam, wire_2d: Array, curves: Array,
-		axis_ticks_out: Array, leader_lines: Array, label_texts: Array,
-		svg_cx: float, svg_bottom_z: float, px_per_m: float) -> String:
-	var xp := func(x: float) -> float: return svg_cx + x * px_per_m
-	var yp := func(z: float) -> float: return (svg_bottom_z - z) * px_per_m
-	var pts_path := func(pts, closed: bool) -> String:
-		var s := ""
-		for i in pts.size():
-			var p = pts[i]
-			var cmd := "M" if i == 0 else "L"
-			s += "%s%.2f,%.2f " % [cmd, xp.call(p.x), yp.call(p.y)]
-		if closed:
-			s += "Z"
-		return s
-
-	# Japanese model-kit / Gunpla manual style: crisp BLACK callout
-	# lines regardless of what they point to (the convention keeps
-	# leader lines neutral so the eye reads them as pure connective
-	# structure); color stays on the SUBJECT (the real green curves /
-	# red unsettled markers), not the line pointing at it. Bold,
-	# high-contrast black text; small black step-marker dots at every
-	# anchor (the manual's numbered-parts-circle convention, unnumbered
-	# here since names already label each one).
 	var parts: Array = []
 	parts.append('<rect width="100%%" height="100%%" fill="white"/>'.replace("%%", "%"))
-	var title := "view %d — yaw %.0f° pitch %.0f°" % [view_idx, rad_to_deg(cam.phi), rad_to_deg(cam.theta)]
-	parts.append('<text x="%.1f" y="23" font-family="Helvetica, Arial, sans-serif" font-size="17" font-weight="700" text-anchor="middle" fill="#000">%s</text>' % [w / 2.0, title])
-
-	parts.append('<g stroke="#1f2937" stroke-width="0.8" opacity="0.7">')
-	for seg in wire_2d:
-		parts.append('<line x1="%.2f" y1="%.2f" x2="%.2f" y2="%.2f"/>' %
-			[xp.call(seg[0].x), yp.call(seg[0].y), xp.call(seg[1].x), yp.call(seg[1].y)])
-	parts.append('</g>')
-
-	for c in curves:
-		var dash := ' stroke-dasharray="9,6"' if c["dashed"] else ''
-		var col: Color = c["color"]
-		var hexcol := "#%02x%02x%02x" % [int(col.r * 255), int(col.g * 255), int(col.b * 255)]
-		var d: String = pts_path.call(c["pts"], c["closed"])
-		parts.append('<path d="%s" fill="none" stroke="#000" stroke-width="3.4" stroke-linejoin="round"%s/>' % [d, dash])
-		parts.append('<path d="%s" fill="none" stroke="%s" stroke-width="2.2"%s/>' % [d, hexcol, dash])
-
-	for t in axis_ticks_out:
-		var x: float = xp.call(t["pt_a"].x)
-		var ya: float = yp.call(t["pt_a"].y)
-		var xb: float = xp.call(t["pt_b"].x)
-		var yb: float = yp.call(t["pt_b"].y)
-		parts.append('<line x1="%.2f" y1="%.2f" x2="%.2f" y2="%.2f" stroke="#000" stroke-width="1.8"/>' % [x, ya, xb, yb])
-		parts.append('<circle cx="%.2f" cy="%.2f" r="3.0" fill="#000"/>' % [x, ya])
-		parts.append('<circle cx="%.2f" cy="%.2f" r="3.0" fill="#000"/>' % [xb, yb])
+	var title := "view %d — yaw %.0f° pitch %.0f°" % [view_idx, rad_to_deg(vd["phi"]), rad_to_deg(vd["theta"])]
+	parts.append('<text x="%.1f" y="22" font-family="Helvetica, Arial, sans-serif" font-size="17" font-weight="700" text-anchor="middle" fill="#000">%s</text>' % [w / 2.0, title])
+	parts.append('<image x="%.1f" y="%.1f" width="%d" height="%d" href="data:image/png;base64,%s"/>' % [img_x0, TITLE_H, IMG_W, IMG_H, png_b64])
 
 	for ll in leader_lines:
-		var d2: String = pts_path.call(ll["pts"], false)
-		parts.append('<path d="%s" fill="none" stroke="#000" stroke-width="1.1"/>' % d2)
-		var anchor_pt = ll["pts"][0]
-		parts.append('<circle cx="%.2f" cy="%.2f" r="2.6" fill="#000"/>' % [xp.call(anchor_pt.x), yp.call(anchor_pt.y)])
+		parts.append('<path d="%s" fill="none" stroke="#000" stroke-width="1.1"/>' % _pts_to_path(ll["pts"]))
+		var a0 = ll["pts"][0]
+		parts.append('<circle cx="%.2f" cy="%.2f" r="2.6" fill="#000"/>' % [a0.x, a0.y])
 
 	for lt in label_texts:
 		var lines: Array = str(lt["text"]).split("\n")
-		var base_y: float = yp.call(lt["z"])
+		var col: Color = lt["color"]
+		var hexcol := "#%02x%02x%02x" % [int(col.r * 255), int(col.g * 255), int(col.b * 255)]
 		for li in lines.size():
-			var dy: float = -float(lines.size() - 1 - li) * 16.0
-			parts.append('<text x="%.2f" y="%.2f" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="700" text-anchor="%s" fill="#000">%s</text>' %
-				[xp.call(lt["x"]), base_y + dy, lt["anchor"], lines[li]])
+			var dy: float = float(li) * 16.0
+			parts.append('<text x="%.2f" y="%.2f" font-family="Helvetica, Arial, sans-serif" font-size="14" font-weight="700" text-anchor="%s" fill="%s">%s</text>' %
+				[lt["x"], lt["z"] + dy, lt["anchor"], hexcol, lines[li]])
 
 	return "\n".join(parts)
 
 
-# Tiles the N panels into one 2xN/2 grid SVG (<svg> per panel wrapped in
-# a <g transform="translate(...)">), each panel keeping its own local
-# coordinate system -- no cross-panel coordinate collisions possible.
+func _place_column(items: Array, margin_x: float, rail_sign: float, img_x0: float,
+		top: float, bottom: float, leader_lines: Array, label_texts: Array) -> void:
+	var n := items.size()
+	if n == 0:
+		return
+	var step: float = (bottom - top) / max(1, n - 1) if n > 1 else 0.0
+	# Cap rail reach to the REAL available room within TEXT_MARGIN (not
+	# a fraction of margin_x-img_x0, which can be much larger than the
+	# actual text-margin band and let rails/labels overshoot into the
+	# next panel or off the canvas edge -- the same class of bug found
+	# earlier in the pure-vector version, see docs/CHANGELOG.md).
+	# Budget: TEXT_MARGIN total, minus the initial 20px offset, minus
+	# ~150px reserved for the longest label text itself.
+	var max_rail_reach: float = max(20.0, TEXT_MARGIN - 20.0 - 150.0)
+	var rail_spacing: float = max_rail_reach / max(1, n - 1) if n > 1 else 0.0
+	for i in n:
+		var item = items[i]
+		var label_y: float = top + step * i if n > 1 else (top + bottom) / 2.0
+		var rail_x: float = margin_x + rail_sign * (20.0 + i * rail_spacing)
+		var anchor := Vector2(item["x"] + img_x0, item["z"] + TITLE_H)
+		leader_lines.append({"pts": [anchor, Vector2(rail_x, anchor.y), Vector2(rail_x, label_y), Vector2(margin_x, label_y)]})
+		var ha := "end" if rail_sign < 0 else "start"
+		var text_x: float = margin_x - (6.0 if rail_sign < 0 else -6.0)
+		label_texts.append({"text": item["text"], "x": text_x, "z": label_y - 4.0, "color": item["color"], "anchor": ha})
+
+
+func _pts_to_path(pts: Array) -> String:
+	var s := ""
+	for i in pts.size():
+		var p: Vector2 = pts[i]
+		s += "%s%.2f,%.2f " % ["M" if i == 0 else "L", p.x, p.y]
+	return s
+
+
 func _compose_tiled_svg(panels: Array) -> String:
 	var cols := 2
 	var gap := 24.0
@@ -576,18 +498,16 @@ func _compose_tiled_svg(panels: Array) -> String:
 		row_h = max(row_h, p["h"])
 	var rows := int(ceil(float(panels.size()) / cols))
 	var total_w := col_w * cols + gap * (cols - 1)
-	var total_h := row_h * rows + gap * (rows - 1) + 55.0  # +55 for the overall title
+	var total_h := row_h * rows + gap * (rows - 1) + 55.0
 
 	var parts: Array = []
 	parts.append('<?xml version="1.0" encoding="utf-8"?>')
 	parts.append('<svg xmlns="http://www.w3.org/2000/svg" width="%.1f" height="%.1f" viewBox="0 0 %.1f %.1f">' % [total_w, total_h, total_w, total_h])
 	parts.append('<rect width="100%%" height="100%%" fill="white"/>'.replace("%%", "%"))
-	parts.append('<text x="%.1f" y="26" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="700" text-anchor="middle" fill="#000">ANNY-SOMA-X — 26 GarmentCode measurement locations, %d real Hammersley-sequence views</text>' % [total_w / 2.0, panels.size()])
-	parts.append('<text x="%.1f" y="44" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="500" text-anchor="middle" fill="#1f2937">green = 24 real fields (dashed = Euclidean, per the real mbotsch/GarmentMeasurements reference); red = 2 reverted to unsettled — each field placed on the view that best faces it</text>')
+	parts.append('<text x="%.1f" y="26" font-family="Helvetica, Arial, sans-serif" font-size="20" font-weight="700" text-anchor="middle" fill="#000">ANNY-SOMA-X — 26 GarmentCode measurement locations, real order-independent (OIT) render, %d Hammersley-sequence views</text>' % [total_w / 2.0, panels.size()])
+	parts.append('<text x="%.1f" y="44" font-family="Helvetica, Arial, sans-serif" font-size="13" font-weight="500" text-anchor="middle" fill="#1f2937">green curves = geodesic/circumference fields; amber = Euclidean; red = 2 reverted to unsettled — each field placed on the view that best faces it</text>')
 	for i in panels.size():
 		var p = panels[i]
-		if p["w"] == 0.0:
-			continue
 		var col := i % cols
 		var row := i / cols
 		var tx := col * (col_w + gap)

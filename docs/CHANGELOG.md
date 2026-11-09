@@ -3,6 +3,55 @@
 This file is the chronological record of what was tried, whether it held
 up, and what was kept — not a feature list (that's the README/docs/STATUS.md).
 
+## 2026-11-08 — Real OIT 3D render replaces the CPU silhouette-edge SVG
+
+iFire: "you must use order independent rendering. it is very wrong."
+The previous fix (real silhouette-edge extraction via a front/back-
+facing sign-flip test per edge) had no notion of OCCLUSION: a 2D CPU
+test can correctly identify a "silhouette" edge in isolation while
+that edge is still hidden behind nearer body geometry from the actual
+camera, since there's no depth buffer in pure vector math. Real
+depth-tested 3D rendering solves this trivially, per-fragment, with no
+sort-order dependency at all -- the actual point of OIT (order-
+independent transparency): no per-triangle draw-order sorting needed
+for correct compositing either.
+
+Clarified via `/clarify`: render the body through the real AVBOIT
+pipeline (same technique as `adapters/xray_oit_render.gd`) to a PNG
+per view, embed that PNG as the SVG's body background, keep labels and
+leader lines as a vector overlay on top. Real measurement curves
+(circumference loops, geodesic/Euclidean lines) are now 3D line meshes
+depth-tested against the body (so a curve on the far side is correctly
+hidden), baked into the same PNG. Anchors for the type-opo boundary
+labeling come straight from Godot's own `cam.unproject_position()`
+(pixel-perfect match to the rendered PNG), not a hand-rolled
+dot-product projection.
+
+Three real bugs found getting this working:
+1. `cam.look_at()` before `add_child()` throws "Node not inside tree"
+   -- order matters, and the very first scene needed an extra
+   `await process_frame` after `root.add_child(scene_root)` that later
+   views didn't (a one-time registration race).
+2. `root.size = Vector2i(...)` silently did not take effect in this
+   run mode (editor, no `--headless`, real GPU needed for OIT) --
+   `cam.unproject_position()` was returning pixel coordinates in the
+   OLD default viewport size (1152x648), while the embedding code
+   assumed the requested size, making the body appear badly off-center
+   and every label pile onto one side. Fixed by reading back the
+   actual achieved viewport size and sizing everything to match it
+   instead of trusting the request.
+3. Rail spacing in `_place_column` was computed as a fraction of
+   `margin_x - img_x0` (an arbitrary, much-too-large distance), not
+   the REAL available room in `TEXT_MARGIN` -- the exact same class of
+   bug found earlier in the pure-vector version (unbounded rail growth
+   pushing later items' leaders/labels past the panel boundary, here
+   clipping at the canvas edge or bleeding into the next panel).
+   Capped to the real TEXT_MARGIN budget.
+
+iFire: "make sure we are sized within standard resolution sizes" --
+the composite now renders at exactly 2560x1439 (QHD, a real standard
+display resolution), not an arbitrary computed size.
+
 ## 2026-11-08 — Real silhouette edges, not a dump of every triangle edge
 
 iFire: "why is the mesh triangles and not polygonal". The ANNY-SOMA-X
